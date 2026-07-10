@@ -1,0 +1,7 @@
+[
+  { "name": "lain's lab", "url": "https://lain-lab.com/room/", "description": "Three.js game & art gallery" },
+  { "name": "lain's lab", "url": "https://lain-lab.com/room02/", "description": "Three.js game & art gallery" },
+  { "name": "lain's lab", "url": "https://lain-lab.com/room03/", "description": "Three.js game & art gallery" },
+  { "name": "alice's room", "url": "https://alice.example.com/room/", "description": "pixel art gallery" },
+  { "name": "bob's lab", "url": "https://bob.example.com/room/", "description": "music studio" }
+]

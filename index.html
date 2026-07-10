@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WIRED ROOM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="crosshair"></div>
+
+    <div id="ui-overlay">
+      <div id="room-name"></div>
+      <div id="controls-hint">WASD: Move / Mouse: Look / E: Interact</div>
+    </div>
+
+    <div id="portal-prompt"></div>
+
+    <!-- Context Menu -->
+    <div id="context-menu"></div>
+
+    <div id="click-to-start">
+      <h2>ROOM</h2>
+      <p>Click to Enter</p>
+    </div>
+
+    <!-- Setup Wizard -->
+    <div id="setup-wizard" style="display:none;">
+      <div class="setup-container">
+        <h2 class="setup-title">ROOM SETUP</h2>
+
+        <!-- Step 0: Room Select -->
+        <div class="setup-step" data-step="0">
+          <h3>SELECT ROOM</h3>
+          <div id="room-grid" class="setup-grid"></div>
+        </div>
+
+        <!-- Step 1: Avatar Select -->
+        <div class="setup-step" data-step="1" style="display:none;">
+          <h3>SELECT AVATAR</h3>
+          <div class="setup-grid avatar-grid">
+            <div class="avatar-card selected" data-id="avater1">
+              <img src="./assets/avatar/avater1.webp" alt="Male" />
+              <div class="setup-card-name">Male</div>
+            </div>
+            <div class="avatar-card" data-id="avater2">
+              <img src="./assets/avatar/avater2.webp" alt="Female" />
+              <div class="setup-card-name">Female</div>
+            </div>
+            <div class="avatar-card" data-id="custom">
+              <div class="upload-area">
+                <label for="vrm-upload" class="upload-label">📁 Upload VRM</label>
+                <input type="file" id="vrm-upload" accept=".vrm" style="display:none;" />
+                <div id="custom-vrm-info"></div>
+              </div>
+              <div class="setup-card-name">Custom</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Sky Select -->
+        <div class="setup-step" data-step="2" style="display:none;">
+          <h3>SELECT SKY</h3>
+          <div class="setup-grid sky-grid">
+            <div class="sky-card selected" data-id="night">
+              <div class="sky-preview sky-night"></div>
+              <div class="setup-card-name">Night</div>
+            </div>
+            <div class="sky-card" data-id="sunset">
+              <div class="sky-preview sky-sunset"></div>
+              <div class="setup-card-name">Sunset</div>
+            </div>
+            <div class="sky-card" data-id="day">
+              <div class="sky-preview sky-day"></div>
+              <div class="setup-card-name">Day</div>
+            </div>
+            <div class="sky-card" data-id="wired">
+              <div class="sky-preview sky-wired"></div>
+              <div class="setup-card-name">WIRED</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Name -->
+        <div class="setup-step" data-step="3" style="display:none;">
+          <h3>ROOM NAME</h3>
+          <input type="text" id="room-name-input" placeholder="My Room" maxlength="32" />
+        </div>
+
+        <!-- Navigation -->
+        <div class="setup-nav">
+          <button id="setup-prev" style="display:none;">◀ PREV</button>
+          <button id="setup-next">NEXT ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "dexie": "https://cdn.jsdelivr.net/npm/dexie@4.0.11/dist/dexie.min.mjs",
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+          "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.8/build/index.module.js",
+          "@pixiv/three-vrm": "https://unpkg.com/@pixiv/three-vrm@3.3.3/lib/three-vrm.module.min.js",
+          "@pixiv/three-vrm-animation": "https://unpkg.com/@pixiv/three-vrm-animation@3.3.3/lib/three-vrm-animation.module.min.js"
+        }
+      }
+    </script>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

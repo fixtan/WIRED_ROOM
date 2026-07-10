@@ -1,0 +1,645 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #000;
+  font-family: 'Courier New', monospace;
+  color: #0f0;
+}
+
+canvas {
+  display: block;
+}
+
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.5;
+}
+
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: #0f0;
+}
+
+#crosshair::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+#crosshair::after {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+#ui-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#room-name {
+  font-size: 14px;
+  color: #0f0;
+  text-shadow: 0 0 10px #0f0;
+  margin-bottom: 8px;
+}
+
+#controls-hint {
+  font-size: 11px;
+  color: #0a0;
+  opacity: 0.7;
+}
+
+#portal-prompt {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #0f0;
+  padding: 16px 24px;
+  font-size: 14px;
+  color: #0f0;
+  text-align: center;
+  display: none;
+  z-index: 20;
+  text-shadow: 0 0 8px #0f0;
+}
+
+#click-to-start {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  cursor: pointer;
+}
+
+#click-to-start h2 {
+  font-size: 24px;
+  color: #0f0;
+  text-shadow: 0 0 20px #0f0;
+  margin-bottom: 16px;
+}
+
+#click-to-start p {
+  font-size: 13px;
+  color: #0a0;
+}
+
+/* ============================================================
+   Setup Wizard
+   ============================================================ */
+#setup-wizard {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.setup-container {
+  width: 90%;
+  max-width: 720px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.setup-title {
+  font-size: 22px;
+  color: #0f0;
+  text-shadow: 0 0 15px #0f0;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.setup-step h3 {
+  font-size: 14px;
+  color: #0a0;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+}
+
+/* Grid */
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.avatar-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Cards */
+.setup-card,
+.avatar-card {
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #0a0a0a;
+}
+
+.setup-card:hover,
+.avatar-card:hover {
+  border-color: #0a0;
+}
+
+.setup-card.selected,
+.avatar-card.selected {
+  border-color: #0f0;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.setup-card img,
+.avatar-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+.setup-card-name {
+  font-size: 12px;
+  color: #0f0;
+  margin-bottom: 2px;
+}
+
+.setup-card-credit {
+  font-size: 10px;
+  color: #080;
+}
+
+.setup-card-stats {
+  font-size: 10px;
+  color: #555;
+}
+
+/* Upload area */
+.upload-area {
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #333;
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+.upload-label {
+  cursor: pointer;
+  color: #0a0;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: 1px solid #0a0;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.upload-label:hover {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+#custom-vrm-info {
+  font-size: 10px;
+  color: #0a0;
+  margin-top: 6px;
+  word-break: break-all;
+}
+
+/* Name input */
+#room-name-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  outline: none;
+}
+
+#room-name-input:focus {
+  border-color: #0f0;
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+#room-name-input::placeholder {
+  color: #333;
+}
+
+/* Nav buttons */
+.setup-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.setup-nav button {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid #0f0;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.setup-nav button:hover {
+  background: rgba(0, 255, 0, 0.15);
+}
+
+/* Sky selection */
+.sky-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.sky-card {
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #0a0a0a;
+}
+
+.sky-card:hover { border-color: #0a0; }
+.sky-card.selected { border-color: #0f0; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+
+.sky-preview {
+  width: 100%;
+  height: 80px;
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+.sky-night {
+  background: linear-gradient(to bottom, #050520 0%, #0a0a3a 50%, #1a0a1a 100%);
+}
+
+.sky-sunset {
+  background: linear-gradient(to bottom, #0a0a3a 0%, #cc4400 50%, #ffaa33 100%);
+}
+
+.sky-day {
+  background: linear-gradient(to bottom, #1a6bcc 0%, #55aaee 50%, #aaddff 100%);
+}
+
+.sky-wired {
+  background: linear-gradient(to bottom, #000000 0%, #0a0a1a 50%, #001100 100%);
+  background-image:
+    linear-gradient(to bottom, #000000, #0a0a1a, #001100),
+    repeating-linear-gradient(0deg, transparent, transparent 7px, rgba(0,255,0,0.05) 8px),
+    repeating-linear-gradient(90deg, transparent, transparent 7px, rgba(0,255,0,0.05) 8px);
+}
+
+/* ============================================================
+   Context Menu
+   ============================================================ */
+#context-menu {
+  display: none;
+  position: fixed;
+  z-index: 300;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid #0a0;
+  border-radius: 4px;
+  min-width: 180px;
+  padding: 4px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.ctx-item {
+  padding: 8px 16px;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.ctx-item:hover {
+  background: rgba(0, 255, 0, 0.12);
+}
+
+.ctx-divider {
+  height: 1px;
+  background: #1a1a1a;
+  margin: 4px 8px;
+}
+
+/* ============================================================
+   VR Button
+   ============================================================ */
+#vr-button {
+  position: fixed !important;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* ============================================================
+   Editor Panel
+   ============================================================ */
+#editor-panel {
+  position: fixed;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  width: 240px;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid #0a0;
+  border-radius: 4px;
+  z-index: 250;
+  font-family: 'Courier New', monospace;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a1a1a;
+  color: #0f0;
+  font-size: 12px;
+}
+
+.editor-header button {
+  background: none;
+  border: none;
+  color: #0a0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.editor-body {
+  padding: 8px 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.editor-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.editor-group label {
+  font-size: 10px;
+  color: #0a0;
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.editor-group input[type="range"] {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #1a1a1a;
+  border-radius: 2px;
+  outline: none;
+}
+
+.editor-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0f0;
+  cursor: pointer;
+}
+
+.editor-group span {
+  font-size: 10px;
+  color: #0f0;
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #1a1a1a;
+}
+
+.editor-actions button {
+  flex: 1;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid #0a0;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.editor-actions button:hover {
+  background: rgba(0, 255, 0, 0.12);
+}
+
+/* ============================================================
+   Room Info Form
+   ============================================================ */
+#room-info-form {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+}
+
+.info-form-container {
+  width: 400px;
+  padding: 24px;
+  background: #0a0a0a;
+  border: 1px solid #0a0;
+  border-radius: 4px;
+}
+
+.info-form-container h3 {
+  color: #0f0;
+  font-size: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.info-field {
+  margin-bottom: 10px;
+}
+
+.info-field label {
+  display: block;
+  font-size: 10px;
+  color: #0a0;
+  margin-bottom: 3px;
+}
+
+.info-field input,
+.info-field select,
+.info-field textarea {
+  width: 100%;
+  padding: 6px 10px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 3px;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  outline: none;
+}
+
+.info-field input:focus,
+.info-field textarea:focus {
+  border-color: #0f0;
+}
+
+.info-field select {
+  cursor: pointer;
+}
+
+.info-field textarea {
+  resize: vertical;
+}
+
+.info-stats {
+  font-size: 10px;
+  color: #555;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.info-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.info-actions button {
+  flex: 1;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid #0a0;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.info-actions button:hover {
+  background: rgba(0, 255, 0, 0.12);
+}
+
+.custom-room-badge {
+  font-size: 9px;
+  color: #0f0;
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid #0a0;
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+   Media Panel
+   ============================================================ */
+#media-panel {
+  position: fixed;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  width: 240px;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid #0a0;
+  border-radius: 4px;
+  z-index: 250;
+  font-family: 'Courier New', monospace;
+}
+
+#media-panel .editor-header,
+#media-panel .editor-body,
+#media-panel .editor-group,
+#media-panel .editor-group label,
+#media-panel .editor-group input[type="range"],
+#media-panel .editor-group span,
+#media-panel .editor-actions,
+#media-panel .editor-actions button {
+  /* Inherits from editor-panel styles */
+}
+
+#media-panel .info-field {
+  margin-bottom: 6px;
+}
+
+#media-panel .info-field label {
+  display: block;
+  font-size: 10px;
+  color: #0a0;
+  margin-bottom: 2px;
+}
+
+#media-panel .info-field input {
+  width: 100%;
+  padding: 4px 8px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 3px;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  outline: none;
+}
+
+#media-panel .info-field input:focus {
+  border-color: #0f0;
+}

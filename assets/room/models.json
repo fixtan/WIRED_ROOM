@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "id": "room_blank",
+      "name": "Room Blank",
+      "file":      "room_blank.glb",
+      "thumbnail": "room_blank.webp",
+      "description": "Room blank for your ideas",
+      "credit": {
+        "author": "Denkon",
+        "credit": "https://sketchfab.com/nykondenys",
+        "url": "https://sketchfab.com/3d-models/room-blank-4a3b97905f9549218525e14c49403e28",
+        "license": "Free Standard"
+      },
+      "defaults": {
+        "scale": 1,
+        "pos": [0, 0, 2],
+        "rot": [0, 0, 0],
+        "spawn": [0, 0, 3]
+      },
+      "stats": {
+        "triangles": 3100,
+        "vertices": 1700,
+        "fileSize": "2.2MB"
+      },
+      "tags": ["room","white","ceiling","window","laminate","plaster","blank","highlight","render","light","wall","ceilinglights","laminated-wood"]
+    }
+
+    ,
+
+    {
+      "id": "living_room_free",
+      "name": "Living Room Interior",
+      "file":      "living_room_interior_free.glb",
+      "thumbnail": "living_room_interior_free.webp",
+      "description": "living room interior Hi! Again I’m testing a neural network. Absolutely all the furniture in this scene is the iis models I’ve reworked. The scheme is the same as the past two published projects (one of which I may delete soon). I don’t know if anyone is reading this description, just say that I have a good day and delicious rice living-room interior ai-3d furniture",
+      "credit": {
+        "author": "dasy444",
+        "credit": "https://sketchfab.com/dasy444",
+        "url": "https://sketchfab.com/3d-models/living-room-interior-free-efeff8e4978e489e82dbb06a86f697f8",
+        "license": "Free Standard"
+      },
+      "defaults": {
+        "scale": 0.2,
+        "pos": [0, 0, 0],
+        "rot": [0, 0, 0],
+        "spawn": [0, 0.15, 0]
+      },
+      "stats": {
+        "triangles": 23200,
+        "vertices": 11300,
+        "fileSize": "3.6MB"
+      },
+      "tags": ["niture","living-room","interior","ai-3d"]
+    }
+
+    ,
+
+    {
+      "id": "living_room_kitchen_bedroom",
+      "name": "living room kitchen bedroom",
+      "file":      "living_roomkitchenbedroom.glb",
+      "thumbnail": "living_roomkitchenbedroom.webp",
+      "description": "living room bedroom kitchen interior house design furnished city town village old handpainted unreal unity blender maya 3dmax sketchup free download game asset game ready photoshop substance painter noai tags scene place sketchfab fab pasha katydid alpaca studio art dae skp realistic model",
+      "credit": {
+        "author": "Katydid.",
+        "credit": "https://sketchfab.com/Katydid.",
+        "url": "https://sketchfab.com/3d-models/living-roomkitchenbedroom-1f9a624a807f457488b9ae8e101d76d0",
+        "license": "Free Standard"
+      },
+      "defaults": {
+        "scale": 0.025,
+        "pos": [0, 2.92, 0],
+        "rot": [0, 0, 0],
+        "spawn": [0, 0, 2]
+      },
+      "stats": {
+        "triangles": 11100,
+        "vertices": 8300,
+        "fileSize": "3.4MB"
+      },
+      "tags": ["bedroom","bored","free","interior","download","noai"]
+    }
+
+    ,
+
+    {
+      "id": "comfy_living_interior",
+      "name": "comfy living interior",
+      "file":      "comfy_living_interior_-_cgt_345_final.glb",
+      "thumbnail": "comfy_living_interior_-_cgt_345_final.webp",
+      "description": "All models handmade in Maya",
+      "credit": {
+        "author": "stefanieprice",
+        "credit": "https://sketchfab.com/stefanieprice",
+        "url": "https://sketchfab.com/3d-models/comfy-living-interior-cgt-345-final-c1b349eb299f4951aa4054b9bc0d84e0",
+        "license": "CC Attribution"
+      },
+      "defaults": {
+        "scale": 25.0,
+        "pos": [-9, 0.0, 0],
+        "rot": [0, 0, 0],
+        "spawn": [0, 0, 2]
+      },
+      "stats": {
+        "triangles":  162700,
+        "vertices": 83400,
+        "fileSize": "8.3MB"
+      },
+      "tags": ["apartment","living","cozy","house","interior","livingroom"]
+    }
+
+    ,
+
+    {
+      "id": "loft_interior_6_for_free",
+      "name": "loft interior (6) for free",
+      "file":      "loft_interior_6_for_free.glb",
+      "thumbnail": "loft_interior_6_for_free.webp",
+      "description": "loft interior 6 for free Yes, another scene of loft furniture and kitchen. from the developer: today I saw hdri for the first time on sketsfab and thought: “this is perfect for the view from the window”.tags loft hdri free-model kitchen living-room",
+      "credit": {
+        "author": "dasy444",
+        "credit": "https://sketchfab.com/dasy444",
+        "url": "https://sketchfab.com/3d-models/loft-interior-6-for-free-32b216c355894218a778345e9c91661d",
+        "license": "Free Standard"
+      },
+      "defaults": {
+        "scale": 0.7,
+        "pos": [1, 0.0, 0],
+        "rot": [0, 0, 0],
+        "spawn": [0, 0, 2]
+      },
+      "stats": {
+        "triangles": 77400,
+        "vertices": 38600,
+        "fileSize": "7.6MB"
+      },
+      "tags": ["loft","kitchen","hdr","living-room","free-model"]
+    }
+  ]
+}

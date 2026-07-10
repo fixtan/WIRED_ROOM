@@ -1,0 +1,20 @@
+# Assets (large binaries - download separately)
+assets/room/*.glb
+assets/avatar/*.vrm
+assets/avatar/*.vrma
+assets/pose/*.vrma
+
+# Keep directory structure
+!assets/room/.gitkeep
+!assets/avatar/.gitkeep
+!assets/pose/.gitkeep
+
+# Public export (user-generated)
+public/
+
+# Thumbnails in models.json
+assets/room/*.webp
+
+# OS
+.DS_Store
+Thumbs.db
