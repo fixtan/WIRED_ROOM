@@ -9,7 +9,7 @@ import { setupMenu } from './js/menu.js';
 import { setupVR, updateVR, isVRActive } from './js/vr.js';
 import { setupEditor } from './js/editor.js';
 import { setupMedia } from './js/media.js';
-import { updateCorridor } from './js/corridor.js';
+import { updateCorridor , prefetchPortalList } from './js/corridor.js';
 import { createPortalEffect, updatePortalAnimations, clearAllPortalAnimations } from './js/portal-effect.js';
 import { PORTAL_COLORS } from './config.js';
 
@@ -415,6 +415,7 @@ async function init() {
   setupMenu(S);
   setupEditor(S);
   await setupMedia(S);
+  await prefetchPortalList();// ポータルリストをキャッシュ
   setupVR(S);
 
   // Edit/Public mode toggle KEY [/]
@@ -497,6 +498,7 @@ async function loadManifestMedia(S) {
         const h = 1.2;
         const geo = new THREE.PlaneGeometry(h * aspect, h);
         const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+        mat.toneMapped = false;  // ← これ追加
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(...(item.pos || [0, 1.5, 0]));
         mesh.rotation.set(
@@ -522,6 +524,7 @@ async function loadManifestMedia(S) {
         const tex = new THREE.VideoTexture(video);
         const geo = new THREE.PlaneGeometry(h * aspect, h);
         const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+        mat.toneMapped = false;  // ← これ追加
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(...(item.pos || [0, 1.5, 0]));
         mesh.rotation.set(

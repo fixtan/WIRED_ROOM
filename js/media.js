@@ -155,6 +155,7 @@ function placeImage(id, dataUrl, savedData) {
       map: texture,
       side: THREE.DoubleSide,
     });
+    mat.toneMapped = false;  // ← これ追加
     const mesh = new THREE.Mesh(geo, mat);
 
     // Default position: center of room, wall height
@@ -207,6 +208,7 @@ function placeVideo(id, blobUrl, savedData) {
       map: tex,
       side: THREE.DoubleSide,
     });
+    mat.toneMapped = false;  // ← これ追加
     const mesh = new THREE.Mesh(geo, mat);
 
     const pos = savedData?.pos || [0, 1.5, 0];

@@ -1,102 +1,67 @@
-// corridor.js - Procedural crossroads corridor generator (WIRED aesthetic)
-// Generates a cross-shaped corridor with portals at dead ends
-// Fetches portal_list.json from GitHub for random destinations
+// corridor.js - Portal Plaza generator
+// Replaces the old corridor with an open plaza using Kenney grass block GLB
+// Portals arranged in a row, with return portal behind player
 import * as THREE from 'three';
+import { loadGLB } from './room-loader.js';
+import { createPortalEffect } from './portal-effect.js';
+import { createSkybox } from './room-loader.js';
 
 const PORTAL_LIST_URL = 'https://raw.githubusercontent.com/fixtan/WIRED_ROOM/main/portal_list.json';
+const GRASS_GLB_PATH = './assets/models/block-grass-overhang-low-long.glb';
+const MAX_PORTALS = 6;
+const PORTAL_SPACING = 3.5;  // distance between portals
+const PORTAL_ROW_Z = -6;     // Z position of portal row (in front of player)
+const RETURN_Z = 4;           // Z position of return portal (behind player)
 
-// ============================================================
-// Dimensions
-// ============================================================
-const HUB = 8;
-const CW = 4;           // corridor width
-const CL = 20;          // corridor length
-const CH = 4.5;         // corridor height
-const WALL_T = 0.15;
-
-const HALF_HUB = HUB / 2;
-const HALF_CW = CW / 2;
-
-// Corridor colors per direction
-const DIR_COLORS = {
-  north: '#00ffcc',
-  east:  '#0088ff',
-  west:  '#8844ff',
-  south: '#ff4422',  // return
-};
+let cachedPortalList = null;
 
 // ============================================================
 // State
 // ============================================================
 let group = null;
-let corridorColliders = [];
 let decorations = [];
 let hiddenObjects = [];
 let savedColliders = null;
 let savedColliderMeshes = null;
+let savedSkyMesh = null;
+let savedCloudMesh = null;
+let savedBackground = null;
 let active = false;
 let stateRef = null;
+let savedPortalMeshes = null;// portals
 
 export function isInCorridor() { return active; }
 
 // ============================================================
-// Textures
+// Prefetch portal list (call before XR session)
 // ============================================================
-function createGridTexture(gridSize, lineColor, bgColor, w = 512, h = 512) {
-  const canvas = document.createElement('canvas');
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = lineColor;
-  ctx.lineWidth = 1;
-  for (let x = 0; x <= w; x += gridSize) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-  }
-  for (let y = 0; y <= h; y += gridSize) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-  }
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  return tex;
-}
-
-function createWallTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512; canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-
-  // Dark gradient
-  const grad = ctx.createLinearGradient(0, 0, 0, 512);
-  grad.addColorStop(0, '#0a0a14');
-  grad.addColorStop(0.5, '#06061a');
-  grad.addColorStop(1, '#0a0a14');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 512, 512);
-
-  // Scan lines
-  ctx.strokeStyle = 'rgba(0,255,136,0.025)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < 512; y += 6) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+export async function prefetchPortalList() {
+  // 1. GitHub
+  try {
+    const res = await fetch(PORTAL_LIST_URL);
+    if (res.ok) {
+      cachedPortalList = await res.json();
+      console.log('[PLAZA] Prefetched from GitHub:', cachedPortalList.length);
+      return;
+    }
+  } catch (e) {
+    console.warn('[PLAZA] GitHub fetch failed:', e);
   }
 
-  // Grid overlay
-  ctx.strokeStyle = 'rgba(0,255,136,0.05)';
-  for (let x = 0; x <= 512; x += 64) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+  // 2. Local fallback
+  try {
+    const res = await fetch('./portal_list.json');
+    if (res.ok) {
+      cachedPortalList = await res.json();
+      console.log('[PLAZA] Loaded from local:', cachedPortalList.length);
+    }
+  } catch (e) {
+    console.warn('[PLAZA] Local fetch also failed:', e);
   }
-  for (let y = 0; y <= 512; y += 64) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
-  }
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  return tex;
 }
 
 // ============================================================
-// Enter corridor mode
+// Enter plaza mode
 // ============================================================
 export async function enterCorridor(S) {
   if (active) return;
@@ -112,33 +77,39 @@ export async function enterCorridor(S) {
   S.colliders = [];
   S.colliderMeshes = [];
 
+  // Save skybox state
+  savedSkyMesh = S.skyMesh;
+  savedCloudMesh = S.cloudMesh;
+  savedBackground = S.scene.background?.clone();
+  if (S.skyMesh) S.skyMesh.visible = false;
+  if (S.cloudMesh) S.cloudMesh.visible = false;
+
   // Clear existing portals
-  const savedPortals = [...S.portalMeshes];
+  savedPortalMeshes = [...S.portalMeshes];
   S.portalMeshes = [];
 
-  // Build crossroads
-  group = buildCrossroads();
+  // Build plaza
+  group = new THREE.Group();
   S.scene.add(group);
 
-  // Apply corridor colliders
-  S.colliders = corridorColliders;
+  await buildPlaza(S);
 
-  // Teleport player to hub center
-  S.playerPos.set(0, 0, 2);
-  S.yaw = Math.PI;  // Face north
+  // Set sky
+  S.scene.background = new THREE.Color('#55aaee');
+
+  // Teleport player
+  S.playerPos.set(0, 0.5, 2);
+  S.yaw = Math.PI;  // Face forward (toward portals)
   S.avatarYaw = 0;
-
-  // Change background
-  S.scene.background = new THREE.Color('#040410');
 
   // Fetch portal list and place portals
   await placePortals(S);
 
-  console.log('[CORRIDOR] Entered crossroads');
+  console.log('[PLAZA] Entered plaza');
 }
 
 // ============================================================
-// Exit corridor mode
+// Exit plaza mode
 // ============================================================
 export async function exitCorridor(S, url) {
   if (!active) return;
@@ -148,7 +119,7 @@ export async function exitCorridor(S, url) {
     const { isVRActive } = await import('./vr.js');
     if (isVRActive()) {
       const { loadExternalRoom } = await import('../app.js');
-      cleanupCorridor(S);
+      cleanupPlaza(S);
       await loadExternalRoom(S, url);
     } else {
       window.location.href = url;
@@ -157,23 +128,22 @@ export async function exitCorridor(S, url) {
   }
 
   // Return to room
-  cleanupCorridor(S);
+  cleanupPlaza(S);
   showRoom(S);
 
-  // Restore background
-  const skyPreset = S.roomData?.sky?.preset;
-  const bgColors = { night: '#0a0a3a', sunset: '#cc4400', day: '#55aaee', wired: '#0a0a1a' };
-  S.scene.background = new THREE.Color(bgColors[skyPreset] || '#1a1a2e');
+  // Restore skybox
+  if (savedSkyMesh) savedSkyMesh.visible = true;
+  if (savedCloudMesh) savedCloudMesh.visible = true;
+  if (savedBackground) S.scene.background = savedBackground;
 
   // Restore player position to spawn
   const spawn = S.roomData?.spawn || [0, 0, 3];
   S.playerPos.set(spawn[0], spawn[1], spawn[2]);
 
-  console.log('[CORRIDOR] Returned to room');
+  console.log('[PLAZA] Returned to room');
 }
 
-function cleanupCorridor(S) {
-  // Remove corridor
+function cleanupPlaza(S) {
   if (group) {
     group.traverse((child) => {
       if (child.geometry) child.geometry.dispose();
@@ -186,14 +156,18 @@ function cleanupCorridor(S) {
     group = null;
   }
 
-  // Restore colliders
   S.colliders = savedColliders || [];
   S.colliderMeshes = savedColliderMeshes || [];
-  S.portalMeshes = [];
-  corridorColliders = [];
-  decorations = [];
+  //S.portalMeshes = [];
+   S.portalMeshes = savedPortalMeshes || [];
+  savedPortalMeshes = null;
 
+  decorations = [];
   active = false;
+}
+
+export function forceShowRoom(S) {
+  showRoom(S);
 }
 
 // ============================================================
@@ -205,18 +179,7 @@ export function updateCorridor(S, dt) {
   const t = S.clock.getElapsedTime();
 
   for (const deco of decorations) {
-    if (deco.type === 'hologram') {
-      deco.mesh.rotation.y += dt * 0.5;
-      deco.mesh.rotation.x = Math.sin(t * 0.3) * 0.2;
-      deco.mesh.position.y = CH / 2 + Math.sin(t * 0.8) * 0.15;
-    } else if (deco.type === 'ring') {
-      deco.mesh.rotation.z += dt * 0.3;
-    } else if (deco.type === 'ring2') {
-      deco.mesh.rotation.z -= dt * 0.2;
-      deco.mesh.rotation.x += dt * 0.15;
-    } else if (deco.type === 'strip') {
-      deco.mesh.material.opacity = 0.3 + 0.3 * Math.sin(t * 2 + deco.phase);
-    } else if (deco.type === 'portalRing') {
+    if (deco.type === 'portalRing') {
       deco.progress += dt * 0.45;
       if (deco.progress > 1.0) deco.progress = 0.0;
       const s = deco.progress * 1.0;
@@ -239,313 +202,226 @@ export function updateCorridor(S, dt) {
 }
 
 // ============================================================
-// Build crossroads geometry
+// Build plaza geometry
 // ============================================================
-function buildCrossroads() {
-  const g = new THREE.Group();
-  corridorColliders = [];
+async function buildPlaza(S) {
   decorations = [];
 
-  // Materials
-  const floorTex = createGridTexture(32, 'rgba(0,255,136,0.12)', '#080810');
-  floorTex.repeat.set(6, 6);
-  const wallTex = createWallTexture();
-  wallTex.repeat.set(3, 1);
-  const ceilTex = createGridTexture(64, 'rgba(0,80,255,0.06)', '#050510');
-  ceilTex.repeat.set(6, 6);
+  // ── Load grass GLB as ground ──
+  try {
+    const gltf = await loadGLB(GRASS_GLB_PATH);
+    const ground = gltf.scene;
+    // Scale up to create a flat plaza surface
+    ground.scale.set(12, 1, 12);
+    ground.position.set(0, 0, -1);
+    ground.traverse((child) => {
+      if (child.isMesh) {
+        child.receiveShadow = true;
+      }
+    });
+    group.add(ground);
 
-  const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7, metalness: 0.3 });
-  const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.6, metalness: 0.15 });
-  const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
+    // BVH collision for ground
+    ground.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        child.geometry.computeBoundsTree();
+        S.colliderMeshes.push(child);
+      }
+    });
 
-  // ── Hub ──
-  addFloor(g, floorMat, 0, 0, HUB, HUB);
-  addCeiling(g, ceilMat, 0, 0, HUB, HUB);
-
-  // ── Four arms ──
-  const dirs = ['north', 'south', 'east', 'west'];
-  for (const dir of dirs) {
-    buildArm(g, dir, floorMat, wallMat, ceilMat);
+  } catch (e) {
+    console.warn('[PLAZA] Failed to load grass GLB, using fallback plane');
+    // Fallback: simple green plane
+    const fallbackGeo = new THREE.PlaneGeometry(30, 20);
+    const fallbackMat = new THREE.MeshStandardMaterial({
+      color: '#4a8c3f', roughness: 0.9, metalness: 0.0,
+    });
+    const fallbackMesh = new THREE.Mesh(fallbackGeo, fallbackMat);
+    fallbackMesh.rotation.x = -Math.PI / 2;
+    fallbackMesh.position.set(0, 0, -2);
+    fallbackMesh.receiveShadow = true;
+    group.add(fallbackMesh);
   }
 
-  // ── Hub walls (between openings) ──
-  buildHubWalls(g, wallMat);
+  // ── Lighting ──
+  const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+  group.add(ambient);
+
+  const sunLight = new THREE.DirectionalLight(0xffeedd, 2.0);
+  sunLight.position.set(5, 10, 3);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(1024, 1024);
+  group.add(sunLight);
+
+  const hemiLight = new THREE.HemisphereLight(0x88bbff, 0x445522, 0.6);
+  group.add(hemiLight);
+
+
+  // ── Preload door GLB ──
+  try {
+    const doorGltf = await loadGLB('./assets/models/door-rotate.glb');
+    S._doorTemplate = doorGltf.scene;
+    console.log('[PLAZA] Door model loaded');
+  } catch (e) {
+    console.warn('[PLAZA] Door model not found');
+    S._doorTemplate = null;
+  }
+
+
 
   // ── Decorations ──
-  addCentralHologram(g);
-  addGlowStrips(g);
-  addLighting(g);
+  const decoItems = [
 
-  return g;
-}
+    { path: './assets/models/barrel.glb',       pos: [7.2, 0.5, 1.48], scale: 1.8 },
 
-// ============================================================
-// Arm builder
-// ============================================================
-function buildArm(g, dir, floorMat, wallMat, ceilMat) {
-  const end = HALF_HUB + CL;
-  const mid = HALF_HUB + CL / 2;
+    { path: './assets/models/flowers-tall.glb', pos: [6.2, 0.5, 1.79], scale: 1.0 },
+    { path: './assets/models/flowers.glb',      pos: [6.68, 0.5, 1.02], scale: 0.8 },
 
-  if (dir === 'north') {
-    addFloor(g, floorMat, 0, -mid, CW, CL);
-    addCeiling(g, ceilMat, 0, -mid, CW, CL);
-    addWallBox(g, wallMat, -HALF_CW, -mid, WALL_T, CH, CL);  // left
-    addWallBox(g, wallMat, HALF_CW, -mid, WALL_T, CH, CL);   // right
-    addWallBox(g, wallMat, 0, -end, CW + WALL_T, CH, WALL_T); // end
-  } else if (dir === 'south') {
-    addFloor(g, floorMat, 0, mid, CW, CL);
-    addCeiling(g, ceilMat, 0, mid, CW, CL);
-    addWallBox(g, wallMat, -HALF_CW, mid, WALL_T, CH, CL);
-    addWallBox(g, wallMat, HALF_CW, mid, WALL_T, CH, CL);
-    addWallBox(g, wallMat, 0, end, CW + WALL_T, CH, WALL_T);
-  } else if (dir === 'east') {
-    addFloor(g, floorMat, mid, 0, CL, CW);
-    addCeiling(g, ceilMat, mid, 0, CL, CW);
-    addWallBox(g, wallMat, mid, -HALF_CW, CL, CH, WALL_T);  // top
-    addWallBox(g, wallMat, mid, HALF_CW, CL, CH, WALL_T);   // bottom
-    addWallBox(g, wallMat, end, 0, WALL_T, CH, CW + WALL_T);
-  } else if (dir === 'west') {
-    addFloor(g, floorMat, -mid, 0, CL, CW);
-    addCeiling(g, ceilMat, -mid, 0, CL, CW);
-    addWallBox(g, wallMat, -mid, -HALF_CW, CL, CH, WALL_T);
-    addWallBox(g, wallMat, -mid, HALF_CW, CL, CH, WALL_T);
-    addWallBox(g, wallMat, -end, 0, WALL_T, CH, CW + WALL_T);
-  }
-}
-
-// ============================================================
-// Hub walls (with corridor openings)
-// ============================================================
-function buildHubWalls(g, wallMat) {
-  const seg = (HUB - CW) / 2; // segment length on each side of opening
-
-  // North face (z = -HALF_HUB)
-  addWallBox(g, wallMat, -(HALF_HUB + HALF_CW) / 2, -HALF_HUB, seg, CH, WALL_T);
-  addWallBox(g, wallMat, (HALF_HUB + HALF_CW) / 2, -HALF_HUB, seg, CH, WALL_T);
-  // South face
-  addWallBox(g, wallMat, -(HALF_HUB + HALF_CW) / 2, HALF_HUB, seg, CH, WALL_T);
-  addWallBox(g, wallMat, (HALF_HUB + HALF_CW) / 2, HALF_HUB, seg, CH, WALL_T);
-  // East face (x = +HALF_HUB)
-  addWallBox(g, wallMat, HALF_HUB, -(HALF_HUB + HALF_CW) / 2, WALL_T, CH, seg);
-  addWallBox(g, wallMat, HALF_HUB, (HALF_HUB + HALF_CW) / 2, WALL_T, CH, seg);
-  // West face
-  addWallBox(g, wallMat, -HALF_HUB, -(HALF_HUB + HALF_CW) / 2, WALL_T, CH, seg);
-  addWallBox(g, wallMat, -HALF_HUB, (HALF_HUB + HALF_CW) / 2, WALL_T, CH, seg);
-}
-
-// ============================================================
-// Geometry helpers
-// ============================================================
-function addFloor(g, mat, cx, cz, w, d) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.set(cx, 0, cz);
-  mesh.receiveShadow = true;
-  g.add(mesh);
-}
-
-function addCeiling(g, mat, cx, cz, w, d) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
-  mesh.rotation.x = Math.PI / 2;
-  mesh.position.set(cx, CH, cz);
-  g.add(mesh);
-}
-
-function addWallBox(g, mat, cx, cz, sx, sy, sz) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
-  mesh.position.set(cx, sy / 2, cz);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  g.add(mesh);
-
-  corridorColliders.push(new THREE.Box3().setFromCenterAndSize(
-    new THREE.Vector3(cx, sy / 2, cz),
-    new THREE.Vector3(sx, sy, sz)
-  ));
-}
-
-// ============================================================
-// Central holographic structure
-// ============================================================
-function addCentralHologram(g) {
-  // Wireframe icosahedron
-  const icoGeo = new THREE.IcosahedronGeometry(0.9, 1);
-  const icoMat = new THREE.MeshBasicMaterial({
-    color: '#00ff88', wireframe: true, transparent: true, opacity: 0.5,
-  });
-  const ico = new THREE.Mesh(icoGeo, icoMat);
-  ico.position.set(0, CH / 2, 0);
-  g.add(ico);
-  decorations.push({ mesh: ico, type: 'hologram' });
-
-  // Orbital rings
-  const ringGeo = new THREE.TorusGeometry(1.4, 0.015, 8, 64);
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: '#00ffaa', transparent: true, opacity: 0.35,
-  });
-
-  const ring1 = new THREE.Mesh(ringGeo, ringMat);
-  ring1.position.set(0, CH / 2, 0);
-  ring1.rotation.x = Math.PI / 2;
-  g.add(ring1);
-  decorations.push({ mesh: ring1, type: 'ring' });
-
-  const ring2 = new THREE.Mesh(ringGeo.clone(), ringMat.clone());
-  ring2.position.set(0, CH / 2, 0);
-  ring2.rotation.set(Math.PI / 3, Math.PI / 5, 0);
-  g.add(ring2);
-  decorations.push({ mesh: ring2, type: 'ring2' });
-
-  // Glow sphere (inner)
-  const glowGeo = new THREE.SphereGeometry(0.3, 16, 16);
-  const glowMat = new THREE.MeshBasicMaterial({
-    color: '#00ff88', transparent: true, opacity: 0.15,
-    blending: THREE.AdditiveBlending,
-  });
-  const glow = new THREE.Mesh(glowGeo, glowMat);
-  glow.position.set(0, CH / 2, 0);
-  g.add(glow);
-}
-
-// ============================================================
-// Glow strips along corridor edges
-// ============================================================
-function addGlowStrips(g) {
-  const stripH = 0.04;
-  let phase = 0;
-
-  const makeStrip = (pos, sx, sz, color) => {
-    const mat = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.5,
-      blending: THREE.AdditiveBlending, depthWrite: false,
-    });
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, stripH, sz), mat);
-    mesh.position.set(...pos);
-    g.add(mesh);
-    decorations.push({ mesh, type: 'strip', phase: phase++ * 0.7 });
-  };
-
-  const arms = [
-    { dir: 'north', color: DIR_COLORS.north },
-    { dir: 'south', color: DIR_COLORS.south },
-    { dir: 'east',  color: DIR_COLORS.east },
-    { dir: 'west',  color: DIR_COLORS.west },
   ];
+  for (const deco of decoItems) {
+    try {
+      const gltf = await loadGLB(deco.path);
+      const model = gltf.scene;
+      model.scale.setScalar(deco.scale);
+      model.position.set(...deco.pos);
+      group.add(model);
+    } catch (e) {}
+  }
 
-  for (const arm of arms) {
-    const mid = HALF_HUB + CL / 2;
-    const c = arm.color;
 
-    if (arm.dir === 'north') {
-      makeStrip([-HALF_CW, 0.02, -mid], 0.06, CL, c);  // floor left
-      makeStrip([HALF_CW, 0.02, -mid], 0.06, CL, c);   // floor right
-      makeStrip([-HALF_CW, CH - 0.02, -mid], 0.06, CL, c);
-      makeStrip([HALF_CW, CH - 0.02, -mid], 0.06, CL, c);
-    } else if (arm.dir === 'south') {
-      makeStrip([-HALF_CW, 0.02, mid], 0.06, CL, c);
-      makeStrip([HALF_CW, 0.02, mid], 0.06, CL, c);
-      makeStrip([-HALF_CW, CH - 0.02, mid], 0.06, CL, c);
-      makeStrip([HALF_CW, CH - 0.02, mid], 0.06, CL, c);
-    } else if (arm.dir === 'east') {
-      makeStrip([mid, 0.02, -HALF_CW], CL, 0.06, c);
-      makeStrip([mid, 0.02, HALF_CW], CL, 0.06, c);
-      makeStrip([mid, CH - 0.02, -HALF_CW], CL, 0.06, c);
-      makeStrip([mid, CH - 0.02, HALF_CW], CL, 0.06, c);
-    } else if (arm.dir === 'west') {
-      makeStrip([-mid, 0.02, -HALF_CW], CL, 0.06, c);
-      makeStrip([-mid, 0.02, HALF_CW], CL, 0.06, c);
-      makeStrip([-mid, CH - 0.02, -HALF_CW], CL, 0.06, c);
-      makeStrip([-mid, CH - 0.02, HALF_CW], CL, 0.06, c);
+  // ── Billboard (大型掲示板) ──
+  const bbW = 5.5; // 幅
+  const bbH = 3; // 高さ
+  const frameT = 0.08;  // frame thickness
+  const frameD = 0.05;  // frame depth
+  const frameMat = new THREE.MeshStandardMaterial({ color: '#8B7355', roughness: 0.6 });
+
+  // Board content
+    const bbCanvas = document.createElement('canvas');
+  bbCanvas.width = 1024;
+  bbCanvas.height = 768;
+  const bbCtx = bbCanvas.getContext('2d');
+
+  // 背景
+  bbCtx.fillStyle = 'rgba(10,10,10,0.9)';
+  bbCtx.fillRect(0, 0, 1024, 768);
+  bbCtx.strokeStyle = '#00ff88';
+  bbCtx.lineWidth = 3;
+  bbCtx.strokeRect(4, 4, 1016, 760);
+
+  // タイトル
+  bbCtx.fillStyle = '#00ffaa';
+  bbCtx.font = 'bold 36px Courier New';
+  bbCtx.textAlign = 'center';
+  bbCtx.fillText('── けいじばん ──', 512, 70);
+
+  // ポータルリスト
+  const list = cachedPortalList || [];
+  bbCtx.textAlign = 'left';
+  bbCtx.font = '22px Courier New';
+  let y = 120;
+  /*
+  for (const entry of list) {
+    bbCtx.fillStyle = '#00ff88';
+    bbCtx.fillText(`■ ${entry.name}`, 40, y);
+    bbCtx.fillStyle = '#888888';
+    bbCtx.font = '18px Courier New';
+    bbCtx.fillText(entry.description || entry.url, 60, y + 28);
+    if (entry.message) {
+      bbCtx.fillStyle = '#aaaaaa';
+      bbCtx.fillText(entry.message, 60, y + 52);
+      y += 80;
+    } else {
+      y += 60;
     }
+    bbCtx.font = '22px Courier New';
   }
+  */
+
+  const bbGeo = new THREE.PlaneGeometry(bbW, bbH);
+  const bbMat = new THREE.MeshBasicMaterial({
+    map: new THREE.CanvasTexture(bbCanvas),
+    side: THREE.DoubleSide,
+    toneMapped: false,
+  });
+  const bbGroup = new THREE.Group();
+
+  // Board
+  const bbMesh = new THREE.Mesh(bbGeo, bbMat);
+  bbGroup.add(bbMesh);
+
+  // Frame (top, bottom, left, right)
+  const hBar = new THREE.Mesh(new THREE.BoxGeometry(bbW + frameT*2, frameT, frameD), frameMat);
+  const vBar = new THREE.Mesh(new THREE.BoxGeometry(frameT, bbH, frameD), frameMat);
+  hBar.clone().position.set(0, bbH/2, 0); // top
+  bbGroup.add(hBar.clone().translateY(bbH/2));
+  bbGroup.add(hBar.clone().translateY(-bbH/2));
+  bbGroup.add(vBar.clone().translateX(-bbW/2));
+  bbGroup.add(vBar.clone().translateX(bbW/2));
+
+  // Legs
+  const legH = 0.8;// leg height
+  const legMat = new THREE.MeshStandardMaterial({ color: '#666666', roughness: 0.5 });
+  const legGeo = new THREE.BoxGeometry(0.12, legH, 0.12);
+  const legL = new THREE.Mesh(legGeo, legMat);
+  legL.position.set(-bbW/2 + 0.3, -bbH/2 - legH/2, 0);
+  bbGroup.add(legL);
+  const legR = new THREE.Mesh(legGeo, legMat);
+  legR.position.set(bbW/2 - 0.3, -bbH/2 - legH/2, 0);
+  bbGroup.add(legR);
+
+  // Position (正面向き)
+  bbGroup.position.set(8, 2.8, -1); // ポジション
+  bbGroup.rotation.y = -Math.PI / 2;  // プレイヤーの方を向く
+  group.add(bbGroup);
 }
 
 // ============================================================
-// Lighting
-// ============================================================
-function addLighting(g) {
-  // Hub center light
-  const center = new THREE.PointLight(0x00ff88, 8.0, 30);
-  center.position.set(0, CH - 0.3, 0);
-  g.add(center);
-
-  // Corridor mid-point lights
-  const halfDist = HALF_HUB + CL / 2;
-  const midLights = [
-    [0, CH - 0.3, -halfDist],
-    [0, CH - 0.3, halfDist],
-    [halfDist, CH - 0.3, 0],
-    [-halfDist, CH - 0.3, 0],
-  ];
-  for (const p of midLights) {
-    const light = new THREE.PointLight(0x00ff88, 4.0, 20);
-    light.position.set(...p);
-    g.add(light);
-  }
-
-  // Arm end lights (colored per direction)
-  const endDist = HALF_HUB + CL - 3;
-  const armLights = [
-    { pos: [0, CH - 0.3, -endDist], color: DIR_COLORS.north },
-    { pos: [0, CH - 0.3, endDist],  color: DIR_COLORS.south },
-    { pos: [endDist, CH - 0.3, 0],  color: DIR_COLORS.east },
-    { pos: [-endDist, CH - 0.3, 0], color: DIR_COLORS.west },
-  ];
-  for (const al of armLights) {
-    const light = new THREE.PointLight(new THREE.Color(al.color), 5.0, 15);
-    light.position.set(...al.pos);
-    g.add(light);
-  }
-
-  // Ambient
-  g.add(new THREE.AmbientLight(0x112233, 0.8));
-}
-
-// ============================================================
-// Portal placement (fetch + display)
+// Portal placement
 // ============================================================
 async function placePortals(S) {
-  // Fetch portal list
-  let portalList = [];
-  try {
-    const res = await fetch(PORTAL_LIST_URL);
-    if (res.ok) portalList = await res.json();
-  } catch (e) {
-    console.warn('[CORRIDOR] Failed to fetch portal list:', e);
-  }
+  let portalList = cachedPortalList || [];
 
-  // Filter out self (current domain)
-  const selfUrl = window.location.origin;
-  portalList = portalList.filter(p => !p.url.startsWith(selfUrl));
-
-  // Shuffle and pick up to 3
-  const shuffled = portalList.sort(() => Math.random() - 0.5).slice(0, 3);
-
-  // Dead end positions: north, east, west get random portals; south = return
-  const endDist = HALF_HUB + CL - 2;
-  const slots = [
-    { pos: [0, 0.02, -endDist], dir: 'north', color: DIR_COLORS.north },
-    { pos: [endDist, 0.02, 0],  dir: 'east',  color: DIR_COLORS.east },
-    { pos: [-endDist, 0.02, 0], dir: 'west',  color: DIR_COLORS.west },
-  ];
-
-  // Place random portals
-  for (let i = 0; i < slots.length; i++) {
-    if (i < shuffled.length) {
-      const portal = shuffled[i];
-      createPortalPoint(S, slots[i].pos, portal.name, portal.url, portal.description || '', slots[i].color);
+  // Retry fetch if cache empty
+  if (portalList.length === 0) {
+    try {
+      const res = await fetch(PORTAL_LIST_URL);
+      if (res.ok) portalList = await res.json();
+    } catch (e) {
+      console.warn('[PLAZA] Failed to fetch portal list:', e);
     }
   }
 
-  // Return portal (south)
-  createPortalPoint(S, [0, 0.02, endDist], '← RETURN', '__return__', 'Back to your room', DIR_COLORS.south);
+  // Filter out self
+  const selfUrl = window.location.href.replace(/\/?$/, '/');
+  portalList = portalList.filter(p => p.url.replace(/\/?$/, '/') !== selfUrl);
+
+  // Shuffle and pick up to MAX_PORTALS
+  const shuffled = portalList.sort(() => Math.random() - 0.5).slice(0, MAX_PORTALS);
+
+  // Calculate positions — horizontal row centered on X axis
+  const totalWidth = (shuffled.length - 1) * PORTAL_SPACING;
+  const startX = -totalWidth / 2;
+
+  for (let i = 0; i < shuffled.length; i++) {
+    const portal = shuffled[i];
+    const x = startX + i * PORTAL_SPACING;
+    createPortalPoint(S, [x, 0.5, PORTAL_ROW_Z], portal.name, portal.url, portal.description || '', '#00ff88', false);
+
+  }
+
+  // Return portal (behind player)
+  createPortalPoint(S, [0, 0.5, RETURN_Z], '← RETURN', '__return__', 'Back to your room', '#ff4422', true);
 }
 
-function createPortalPoint(S, pos, label, url, description, color) {
+// ============================================================
+// Create individual portal point with effect + label
+// ============================================================
+function createPortalPoint(S, pos, label, url, description, color, isReturn) {
   const portalGroup = new THREE.Group();
   portalGroup.position.set(pos[0], pos[1], pos[2]);
 
-  // WavyRing effect (3 expanding rings)
+  // WavyRing effect
   const ringGeo = new THREE.RingGeometry(0.96, 1.0, 48);
   const offsets = [0.0, 0.33, 0.66];
   for (let i = 0; i < 3; i++) {
@@ -600,9 +476,21 @@ function createPortalPoint(S, pos, label, url, description, color) {
   portalGroup.userData = { url, label };
   S.portalMeshes.push(portalGroup);
 
+  // Door model
+  if (stateRef?._doorTemplate) {
+    const door = stateRef._doorTemplate.clone();
+    door.scale.set(2.0, 2.0, 1.0);
+    door.position.set(0, 0, isReturn ? 0.5 : -0.5);
+    door.rotation.y = isReturn ? 0 : Math.PI;
+    portalGroup.add(door);
+  }
+
   group.add(portalGroup);
 }
 
+// ============================================================
+// Label sprite
+// ============================================================
 function createLabelSprite(label, description, color) {
   const canvas = document.createElement('canvas');
   canvas.width = 512; canvas.height = 160;

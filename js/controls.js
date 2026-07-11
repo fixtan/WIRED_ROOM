@@ -108,6 +108,10 @@ export function setupControls(S) {
   document.addEventListener('keydown', (e) => {
     S.keys[e.code] = true;
     if (e.code === 'KeyE') tryPortalInteract();
+    // Debug: show position
+    if (e.code === 'Digit2' && e.shiftKey) {  // @ = Shift+2
+      console.log(`[DEBUG] pos: [${S.playerPos.x.toFixed(2)}, ${S.playerPos.y.toFixed(2)}, ${S.playerPos.z.toFixed(2)}], yaw: ${S.yaw.toFixed(2)}`);
+    }
   });
   document.addEventListener('keyup', (e) => {
     S.keys[e.code] = false;
