@@ -119,3 +119,10 @@ export function removePortalAnimation(group) {
   const idx = portalAnimations.findIndex(a => a.group === group);
   if (idx !== -1) portalAnimations.splice(idx, 1);
 }
+
+// ============================================================
+// Clear all portal animations (for room switching)
+// ============================================================
+export function clearAllPortalAnimations() {
+  portalAnimations.length = 0;
+}

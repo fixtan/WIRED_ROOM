@@ -140,15 +140,39 @@ export async function enterCorridor(S) {
 // ============================================================
 // Exit corridor mode
 // ============================================================
-export function exitCorridor(S, url) {
+export async function exitCorridor(S, url) {
   if (!active) return;
 
   // Navigate to URL or return to room
   if (url && url !== '__return__') {
-    window.location.href = url;
+    const { isVRActive } = await import('./vr.js');
+    if (isVRActive()) {
+      const { loadExternalRoom } = await import('../app.js');
+      cleanupCorridor(S);
+      await loadExternalRoom(S, url);
+    } else {
+      window.location.href = url;
+    }
     return;
   }
 
+  // Return to room
+  cleanupCorridor(S);
+  showRoom(S);
+
+  // Restore background
+  const skyPreset = S.roomData?.sky?.preset;
+  const bgColors = { night: '#0a0a3a', sunset: '#cc4400', day: '#55aaee', wired: '#0a0a1a' };
+  S.scene.background = new THREE.Color(bgColors[skyPreset] || '#1a1a2e');
+
+  // Restore player position to spawn
+  const spawn = S.roomData?.spawn || [0, 0, 3];
+  S.playerPos.set(spawn[0], spawn[1], spawn[2]);
+
+  console.log('[CORRIDOR] Returned to room');
+}
+
+function cleanupCorridor(S) {
   // Remove corridor
   if (group) {
     group.traverse((child) => {
@@ -169,20 +193,7 @@ export function exitCorridor(S, url) {
   corridorColliders = [];
   decorations = [];
 
-  // Show room
-  showRoom(S);
-
-  // Restore background
-  const skyPreset = S.roomData?.sky?.preset;
-  const bgColors = { night: '#0a0a3a', sunset: '#cc4400', day: '#55aaee', wired: '#0a0a1a' };
-  S.scene.background = new THREE.Color(bgColors[skyPreset] || '#1a1a2e');
-
-  // Restore player position to spawn
-  const spawn = S.roomData?.spawn || [0, 0, 3];
-  S.playerPos.set(spawn[0], spawn[1], spawn[2]);
-
   active = false;
-  console.log('[CORRIDOR] Returned to room');
 }
 
 // ============================================================

@@ -144,3 +144,29 @@ export function updateAvatar(S, dt, isNowMoving) {
   // Update VRM internals
   playerVrm.update(dt);
 }
+
+
+// ============================================================
+// Dispose avatar (for room switching)
+// ============================================================
+export function disposeAvatar(S) {
+  if (playerGroup) {
+    S.scene.remove(playerGroup);
+    playerGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+        else child.material.dispose();
+      }
+    });
+  }
+  playerVrm = null;
+  playerMixer = null;
+  playerGroup = null;
+  playerIsMoving = false;
+  currentAnimId = '';
+  currentAction = null;
+  S.avatarGroup = null;
+  Object.keys(vrmAnims).forEach(k => delete vrmAnims[k]);
+  console.log('[AVATAR] Disposed');
+}
