@@ -635,7 +635,7 @@ function createLabelSprite(label, description, color) {
 function hideRoom(S) {
   hiddenObjects = [];
   for (const child of S.scene.children) {
-    if (child.visible) {
+    if (child.visible && child !== S.avatarGroup) {
       hiddenObjects.push(child);
       child.visible = false;
     }

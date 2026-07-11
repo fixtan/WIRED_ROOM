@@ -3,8 +3,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
-import { addMenuItem } from './menu.js';
 import Dexie from 'dexie';
+import { PORTAL_COLORS } from '../config.js';
+import { addMenuItem } from './menu.js';
+import { createPortalEffect, updatePortalAnimations, removePortalAnimation } from './portal-effect.js';
+
 
 // VRM loader for figurines
 const figurineLoader = new GLTFLoader();
@@ -84,10 +87,7 @@ export async function setupMedia(S) {
     label: 'Add Portal',
     icon: '🌀',
     action: () => {
-      const url = prompt('Portal URL:', 'https://');
-      if (!url) return;
-      const label = prompt('Label:', '') || url;
-      placePortal(`portal_${Date.now()}`, null, url, label);
+      placePortal(`portal_${Date.now()}`, null, '', 'global');
     },
   });
 
@@ -381,59 +381,17 @@ async function addCustomPose() {
 }
 
 
+
+
 // ============================================================
 // Place Portal (WavyRing effect)　ポータル
 // ============================================================
-const portalAnimations = []; // track for per-frame update
-
 function placePortal(id, savedData, url, label) {
-  const color = new THREE.Color(savedData?.color || '#00ff88');
-  const radius = 0.8;
-  const group = new THREE.Group();
+  const portalType = savedData?.portalType || (label === 'friend' ? 'friend' : 'global');
 
-  // 3 expanding rings (geometry created once, scaled per frame)
-  const ringGeo = new THREE.RingGeometry(0.96, 1.0, 64);
-  const rings = [];
-  const ringOffsets = [0.0, 0.33, 0.66];
-  for (let i = 0; i < 3; i++) {
-    const mat = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.7,
-      blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false,
-    });
-    const ring = new THREE.Mesh(ringGeo, mat);
-    ring.rotation.x = -Math.PI / 2;
-    ring.scale.set(0.01, 0.01, 1);
-    group.add(ring);
-    rings.push({ mesh: ring, progress: ringOffsets[i] });
-  }
+  const { group } = createPortalEffect(portalType);
 
-  // Particles
-  const particleCount = 15;
-  const positions = new Float32Array(particleCount * 3);
-  const particles = [];
-  for (let i = 0; i < particleCount; i++) {
-    const p = {
-      x: (Math.random() - 0.5) * radius * 1.2,
-      y: Math.random() * 1.5,
-      z: (Math.random() - 0.5) * radius * 1.2,
-      speedY: 0.15 + Math.random() * 0.2,
-      age: Math.random() * 2,
-      maxAge: 2 + Math.random() * 2,
-    };
-    positions[i * 3] = p.x;
-    positions[i * 3 + 1] = p.y;
-    positions[i * 3 + 2] = p.z;
-    particles.push(p);
-  }
-  const particleGeo = new THREE.BufferGeometry();
-  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const points = new THREE.Points(particleGeo, new THREE.PointsMaterial({
-    color, size: 0.04, transparent: true, opacity: 0.8,
-    blending: THREE.AdditiveBlending, depthWrite: false,
-  }));
-  group.add(points);
-
-  // Position at player feet or saved position
+  // Position
   const pos = savedData?.pos || [stateRef.playerPos.x, 0, stateRef.playerPos.z];
   const rot = savedData?.rot || [0, 0, 0];
   const scale = savedData?.scale || 1;
@@ -443,20 +401,14 @@ function placePortal(id, savedData, url, label) {
 
   const portalUrl = savedData?.url || url || '';
   const portalLabel = savedData?.label || label || portalUrl;
-  group.userData = { mediaId: id, type: 'portal', url: portalUrl, label: portalLabel };
+  group.userData = { mediaId: id, type: 'portal', url: portalUrl, label: portalLabel, portalType };
 
   stateRef.scene.add(group);
-
-  // Register with portal system for E-key interaction
   stateRef.portalMeshes.push(group);
-
-  // Animation data
-  const animData = { group, rings, particles, particleGeo, radius };
-  portalAnimations.push(animData);
 
   const item = {
     id, type: 'portal', mesh: group,
-    data: { pos, rot, scale, url: portalUrl, label: portalLabel },
+    data: { pos, rot, scale, url: portalUrl, label: portalLabel, portalType },
   };
   mediaItems.push(item);
 
@@ -469,34 +421,6 @@ function placePortal(id, savedData, url, label) {
   console.log(`[MEDIA] Portal placed: ${portalLabel} → ${portalUrl}`);
 }
 
-// Called from app.js render loop
-export function updatePortalAnimations(dt) {
-  for (const anim of portalAnimations) {
-    // Rings
-    for (const ring of anim.rings) {
-      ring.progress += dt * 0.45;
-      if (ring.progress > 1.0) ring.progress = 0.0;
-      const s = ring.progress * anim.radius;
-      ring.mesh.scale.set(s, s, 1);
-      ring.mesh.material.opacity = (1.0 - ring.progress) * 0.7;
-    }
-    // Particles
-    const posAttr = anim.particleGeo.attributes.position;
-    for (let i = 0; i < anim.particles.length; i++) {
-      const p = anim.particles[i];
-      p.age += dt;
-      p.y += p.speedY * dt;
-      if (p.age > p.maxAge || p.y > 1.5) {
-        p.x = (Math.random() - 0.5) * anim.radius * 1.2;
-        p.y = 0;
-        p.z = (Math.random() - 0.5) * anim.radius * 1.2;
-        p.age = 0;
-      }
-      posAttr.setXYZ(i, p.x, p.y, p.z);
-    }
-    posAttr.needsUpdate = true;
-  }
-}
 
 
 // ============================================================
@@ -651,6 +575,9 @@ function selectMedia(item) {
   selectedMedia = item;
 }
 
+import { MEDIA_MOVE_STEP, MEDIA_ROT_STEP, MEDIA_SCALE_STEP } from '../config.js';
+
+
 // ============================================================
 // Media adjustment panel
 // ============================================================
@@ -666,27 +593,27 @@ function createMediaPanel() {
     <div class="editor-body">
       <div class="editor-group">
         <label>Pos X</label>
-        <input type="range" id="md-posX" min="-10" max="10" step="0.001" value="0" />
+        <input type="range" id="md-posX" min="-10" max="10" step="${MEDIA_MOVE_STEP}" value="0" />
         <span id="md-posX-val">0</span>
       </div>
       <div class="editor-group">
         <label>Pos Y</label>
-        <input type="range" id="md-posY" min="-1" max="5" step="0.001" value="1.5" />
+        <input type="range" id="md-posY" min="-1" max="5" step="${MEDIA_MOVE_STEP}" value="1.5" />
         <span id="md-posY-val">1.5</span>
       </div>
       <div class="editor-group">
         <label>Pos Z</label>
-        <input type="range" id="md-posZ" min="-10" max="10" step="0.001" value="0" />
+        <input type="range" id="md-posZ" min="-10" max="10" step="${MEDIA_MOVE_STEP}" value="0" />
         <span id="md-posZ-val">0</span>
       </div>
       <div class="editor-group">
         <label>Rot Y</label>
-        <input type="range" id="md-rotY" min="0" max="360" step="0.1" value="0" />
+        <input type="range" id="md-rotY" min="0" max="360" step="${MEDIA_ROT_STEP}" value="0" />
         <span id="md-rotY-val">0</span>
       </div>
       <div class="editor-group">
         <label>Scale</label>
-        <input type="range" id="md-scale" min="0.1" max="5" step="0.01" value="1" />
+        <input type="range" id="md-scale" min="0.1" max="5" step="${MEDIA_SCALE_STEP}" value="1" />
         <span id="md-scale-val">1</span>
       </div>
       <div class="info-field" style="margin-top:8px;">

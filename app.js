@@ -8,9 +8,10 @@ import { loadConfig, showSetupWizard, buildRoomDataFromConfig } from './js/setup
 import { setupMenu } from './js/menu.js';
 import { setupVR, updateVR, isVRActive } from './js/vr.js';
 import { setupEditor } from './js/editor.js';
-import { setupMedia, updatePortalAnimations } from './js/media.js';
+import { setupMedia } from './js/media.js';
 import { updateCorridor } from './js/corridor.js';
-
+import { createPortalEffect, updatePortalAnimations } from './js/portal-effect.js';
+import { PORTAL_COLORS } from './config.js';
 
 // Patch Three.js for BVH accelerated raycasting
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -438,27 +439,12 @@ async function loadManifestMedia(S) {
         mesh.scale.setScalar(item.scale || 1);
         S.scene.add(mesh);
       } else if (item.type === 'portal') {
-        const portalGroup = new THREE.Group();
-        portalGroup.position.set(...(item.pos || [0, 0, 0]));
-        portalGroup.userData = { url: item.url || '', label: item.label || 'Portal' };
-
-        // WavyRing visual
-        const ringGeo = new THREE.RingGeometry(0.96, 1.0, 48);
-        const color = '#00ff88';
-        const offsets = [0.0, 0.33, 0.66];
-        for (let i = 0; i < 3; i++) {
-          const mat = new THREE.MeshBasicMaterial({
-            color, transparent: true, opacity: 0.6,
-            blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false,
-          });
-          const ring = new THREE.Mesh(ringGeo, mat);
-          ring.rotation.x = -Math.PI / 2;
-          ring.scale.set(offsets[i], offsets[i], 1);
-          portalGroup.add(ring);
-        }
-
-        S.scene.add(portalGroup);
-        S.portalMeshes.push(portalGroup);
+        const portalType = item.portalType || 'global';
+        const { group } = createPortalEffect(portalType);
+        group.position.set(...(item.pos || [0, 0, 0]));
+        group.userData = { url: item.url || '', label: item.label || 'Portal', portalType };
+        S.scene.add(group);
+        S.portalMeshes.push(group);
       }
 
     } catch (e) {

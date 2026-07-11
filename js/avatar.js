@@ -52,6 +52,10 @@ export async function loadPlayerAvatar(S, avatarConfig) {
 
     // Create group for positioning
     playerGroup = new THREE.Group();
+
+    // 追加
+    S.avatarGroup = playerGroup;
+
     const scale = avatarConfig.scale || 1;
     vrm.scene.scale.set(scale, scale, scale);
     playerGroup.add(vrm.scene);

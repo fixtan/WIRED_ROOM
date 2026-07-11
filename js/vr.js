@@ -3,8 +3,8 @@
 import * as THREE from 'three';
 import { XRButton } from 'three/addons/webxr/XRButton.js';
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
+import { checkCollision, tryPortalInteract, checkPortalProximity } from './controls.js';
 import { updateAvatar } from './avatar.js';
-import { checkCollision } from './controls.js';
 import { toggleMenu } from './menu.js';
 
 let vrActive = false;
@@ -13,6 +13,7 @@ let controller1 = null; // right
 let controllerGrip0 = null;
 let controllerGrip1 = null;
 let wasYPressed = false;  // debounce for Y button
+let wasAPressed = false;  // debounce for A button (portal interact)
 
 // VR-specific movement state
 const VR_STICK_DEADZONE = 0.15;
@@ -182,7 +183,7 @@ export function updateVR(S, dt) {
   if (vrInput.buttonY && !wasYPressed) {
     toggleMenu();
   }
-  wasYPressed = vrInput.buttonY;
+  wasYPressed = vrInput.buttonY;  // ← 追加
 
   // ── 1. Movement direction based on VR camera (headset) direction ──
   const camera = S.renderer.xr.getCamera();
@@ -241,6 +242,15 @@ export function updateVR(S, dt) {
     S.cameraGroup.position.z = S.playerPos.z;
     S.cameraGroup.position.y = S.playerPos.y;
   }
+
+  // A button: portal interact
+  if (vrInput.buttonA && !wasAPressed) {
+    tryPortalInteract();
+  }
+  wasAPressed = vrInput.buttonA;
+
+  // Portal proximity check
+  checkPortalProximity(S);
 
   // ── 3. Update VRM avatar ──
   updateAvatar(S, dt, isMoving);

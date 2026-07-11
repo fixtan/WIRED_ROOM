@@ -114,9 +114,9 @@ export function setupControls(S) {
   });
 }
 
-function tryPortalInteract() {
+export function tryPortalInteract() {
   const promptEl = document.getElementById('portal-prompt');
-  if (!promptEl.dataset.url) return;
+  if (!promptEl.dataset.url && !promptEl.dataset.portalType) return;
 
   const url = promptEl.dataset.url;
 
@@ -136,7 +136,7 @@ function tryPortalInteract() {
 const _playerPosXZ = new THREE.Vector3();
 const _portalPos = new THREE.Vector3();
 
-function checkPortalProximity(S) {
+export function checkPortalProximity(S) {
   const promptEl = document.getElementById('portal-prompt');
   let nearestPortal = null;
   let nearestDist = S.PORTAL_TRIGGER_DIST;
@@ -155,10 +155,12 @@ function checkPortalProximity(S) {
   if (nearestPortal) {
     promptEl.style.display = 'block';
     promptEl.textContent = `[E] ${nearestPortal.userData.label}`;
-    promptEl.dataset.url = nearestPortal.userData.url;
+    promptEl.dataset.url = nearestPortal.userData.url || '';
+    promptEl.dataset.portalType = nearestPortal.userData.portalType || 'global';
   } else {
     promptEl.style.display = 'none';
     promptEl.dataset.url = '';
+    promptEl.dataset.portalType = '';
   }
 
   // Animate portal meshes
