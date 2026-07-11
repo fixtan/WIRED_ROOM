@@ -1,6 +1,11 @@
 // controls.js - Keyboard, mouse, collision detection, movement, camera, portals
 import * as THREE from 'three';
 import { updateAvatar } from './avatar.js';
+import { enterCorridor, exitCorridor, isInCorridor } from './corridor.js';
+
+
+let stateRef = null;
+
 
 // ============================================================
 // Collision detection (hybrid: Box3 + Raycaster)
@@ -71,6 +76,8 @@ export function checkCollision(S, newPos) {
 // Controls setup
 // ============================================================
 export function setupControls(S) {
+  stateRef = S;
+
   // Click to start / pointer lock
   const startScreen = document.getElementById('click-to-start');
   startScreen.addEventListener('click', () => {
@@ -109,13 +116,16 @@ export function setupControls(S) {
 
 function tryPortalInteract() {
   const promptEl = document.getElementById('portal-prompt');
-  if (promptEl.dataset.url) {
-    const url = promptEl.dataset.url;
-    if (window.self !== window.top) {
-      window.open(url, '_blank');
-    } else {
-      window.location.href = url;
-    }
+  if (!promptEl.dataset.url) return;
+
+  const url = promptEl.dataset.url;
+
+  if (isInCorridor()) {
+    // In corridor: navigate to URL or return
+    exitCorridor(stateRef, url);
+  } else {
+    // In room: enter corridor
+    enterCorridor(stateRef);
   }
 }
 

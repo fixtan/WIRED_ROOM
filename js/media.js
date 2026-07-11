@@ -31,6 +31,7 @@ let stateRef = null;
 let mediaItems = [];       // { id, type, mesh, data }
 let selectedMedia = null;
 let mediaPanel = null;
+let isLoadingMedia = false;// 追加
 
 // ============================================================
 // Init media system
@@ -91,7 +92,10 @@ export async function setupMedia(S) {
   });
 
   // Load saved media from localStorage
-  loadSavedMedia();
+  //loadSavedMedia();
+  if (!S.isPublicMode) {
+    loadSavedMedia();
+  }
 
   // Click to select media (raycaster)
   setupMediaRaycaster();
@@ -233,7 +237,7 @@ function placeVideo(id, blobUrl, savedData) {
 // ============================================================
 // Credit board
 // ============================================================
-function createCreditBoard() {
+function createCreditBoard(isLoading = false) {
   // Get credit info from config
   const config = JSON.parse(localStorage.getItem('room_config') || '{}');
   const meta = config.roomMeta || {};
@@ -313,9 +317,11 @@ function createCreditBoard() {
   const item = { id: 'credit_board', type: 'credit', mesh, data: { pos: [0, 1.5, -2], rot: [0, 0, 0], scale: 1 } };
   mediaItems.push(item);
 
-  selectMedia(item);
-  showMediaPanel();
-  saveMediaList();
+  if (!isLoading) {
+    selectMedia(item);
+    showMediaPanel();
+    saveMediaList();
+  }
 
   console.log('[MEDIA] Credit board created');
 }
@@ -660,27 +666,27 @@ function createMediaPanel() {
     <div class="editor-body">
       <div class="editor-group">
         <label>Pos X</label>
-        <input type="range" id="md-posX" min="-10" max="10" step="0.05" value="0" />
+        <input type="range" id="md-posX" min="-10" max="10" step="0.001" value="0" />
         <span id="md-posX-val">0</span>
       </div>
       <div class="editor-group">
         <label>Pos Y</label>
-        <input type="range" id="md-posY" min="0" max="5" step="0.05" value="1.5" />
+        <input type="range" id="md-posY" min="-1" max="5" step="0.001" value="1.5" />
         <span id="md-posY-val">1.5</span>
       </div>
       <div class="editor-group">
         <label>Pos Z</label>
-        <input type="range" id="md-posZ" min="-10" max="10" step="0.05" value="0" />
+        <input type="range" id="md-posZ" min="-10" max="10" step="0.001" value="0" />
         <span id="md-posZ-val">0</span>
       </div>
       <div class="editor-group">
         <label>Rot Y</label>
-        <input type="range" id="md-rotY" min="0" max="360" step="1" value="0" />
+        <input type="range" id="md-rotY" min="0" max="360" step="0.1" value="0" />
         <span id="md-rotY-val">0</span>
       </div>
       <div class="editor-group">
         <label>Scale</label>
-        <input type="range" id="md-scale" min="0.1" max="5" step="0.05" value="1" />
+        <input type="range" id="md-scale" min="0.1" max="5" step="0.01" value="1" />
         <span id="md-scale-val">1</span>
       </div>
       <div class="info-field" style="margin-top:8px;">
@@ -850,6 +856,7 @@ function deleteMedia(item) {
 // Save/Load media list
 // ============================================================
 function saveMediaList() {
+  if (isLoadingMedia) return;  // ロード中は絶対に保存しない
   const list = mediaItems.map(item => {
     const entry = {
       id: item.id,
@@ -879,6 +886,8 @@ async function loadSavedMedia() {
   const saved = localStorage.getItem('room_media');
   if (!saved) return;
 
+  isLoadingMedia = true;  // ← ガード開始
+
   try {
     const list = JSON.parse(saved);
     for (const item of list) {
@@ -894,8 +903,9 @@ async function loadSavedMedia() {
         }
       } else if (item.type === 'figurine') {
         await placeFigurine(item.id, item);
+      } else if (item.type === 'portal') {
+        placePortal(item.id, item, item.url, item.label);
       } else if (item.type === 'credit') {
-        // Recreate credit board at saved position
         createCreditBoard();
         const creditItem = mediaItems.find(m => m.type === 'credit');
         if (creditItem) {
@@ -904,9 +914,11 @@ async function loadSavedMedia() {
           creditItem.mesh.scale.setScalar(item.scale || 1);
           creditItem.data = { ...item };
         }
+        hideMediaPanel();
       }
     }
   } catch (e) {
     console.error('[MEDIA] Failed to load saved media:', e);
   }
+  isLoadingMedia = false;  // ← ガード解除
 }

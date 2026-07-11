@@ -398,6 +398,21 @@ function buildManifest(config, mediaList, mediaFileMap = {}) {
         pos: item.pos,
         rot: item.rot,
         scale: item.scale,
+        creditData: {
+          name: config.roomName || 'Room',
+          author: config.roomMeta?.author || '',
+          license: config.roomMeta?.license || '',
+          creditList: config.roomMeta?.creditList || '',
+        },
+      });
+    } else if (item.type === 'portal') {
+      manifest.media.push({
+        type: 'portal',
+        pos: item.pos,
+        rot: item.rot,
+        scale: item.scale,
+        url: item.url || '',
+        label: item.label || '',
       });
     }
   }

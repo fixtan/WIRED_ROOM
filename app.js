@@ -9,6 +9,8 @@ import { setupMenu } from './js/menu.js';
 import { setupVR, updateVR, isVRActive } from './js/vr.js';
 import { setupEditor } from './js/editor.js';
 import { setupMedia, updatePortalAnimations } from './js/media.js';
+import { updateCorridor } from './js/corridor.js';
+
 
 // Patch Three.js for BVH accelerated raycasting
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -340,10 +342,77 @@ async function loadManifestMedia(S) {
           } catch (e) { console.warn('[PUBLIC] Pose load failed:', e); }
         }
 
-      } else if (item.type === 'credit') {
-        // Simple credit board placeholder (no config in public mode)
-        // Could be enhanced later
+      }else if (item.type === 'credit') {
+        const cd = item.creditData || {};
+        let lines = [`── ${cd.name || 'Room'} ──`, ''];
+        if (cd.author) lines.push(`Room by: ${cd.author}`);
+        if (cd.license) lines.push(`License: ${cd.license}`);
+        if (cd.creditList) {
+          lines.push('', '── Credits ──', '');
+          lines = lines.concat(cd.creditList.split('\n').filter(l => l.trim()));
+        }
+        const canvas = document.createElement('canvas');
+        const lineHeight = 28, padding = 30;
+        canvas.width = 512;
+        canvas.height = Math.max(256, lines.length * lineHeight + padding * 2);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'rgba(10,10,10,0.9)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+        ctx.fillStyle = '#00ff88';
+        ctx.font = '18px Courier New';
+        ctx.textAlign = 'left';
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (line.startsWith('──')) {
+            ctx.fillStyle = '#00ffaa';
+            ctx.font = 'bold 20px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(line, canvas.width / 2, padding + i * lineHeight);
+            ctx.textAlign = 'left';
+            ctx.font = '18px Courier New';
+            ctx.fillStyle = '#00ff88';
+          } else {
+            ctx.fillText(line, padding, padding + i * lineHeight);
+          }
+        }
+        const aspect = canvas.width / canvas.height;
+        const h = 1.5;
+        const geo = new THREE.PlaneGeometry(h * aspect, h);
+        const mat = new THREE.MeshBasicMaterial({
+          map: new THREE.CanvasTexture(canvas), side: THREE.DoubleSide, transparent: true,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(...(item.pos || [0, 1.5, -2]));
+        mesh.rotation.y = THREE.MathUtils.degToRad(item.rot?.[1] || 0);
+        mesh.scale.setScalar(item.scale || 1);
+        S.scene.add(mesh);
+      } else if (item.type === 'portal') {
+        const portalGroup = new THREE.Group();
+        portalGroup.position.set(...(item.pos || [0, 0, 0]));
+        portalGroup.userData = { url: item.url || '', label: item.label || 'Portal' };
+
+        // WavyRing visual
+        const ringGeo = new THREE.RingGeometry(0.96, 1.0, 48);
+        const color = '#00ff88';
+        const offsets = [0.0, 0.33, 0.66];
+        for (let i = 0; i < 3; i++) {
+          const mat = new THREE.MeshBasicMaterial({
+            color, transparent: true, opacity: 0.6,
+            blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false,
+          });
+          const ring = new THREE.Mesh(ringGeo, mat);
+          ring.rotation.x = -Math.PI / 2;
+          ring.scale.set(offsets[i], offsets[i], 1);
+          portalGroup.add(ring);
+        }
+
+        S.scene.add(portalGroup);
+        S.portalMeshes.push(portalGroup);
       }
+
     } catch (e) {
       console.warn(`[PUBLIC] Failed to load media:`, item, e);
     }
@@ -402,6 +471,7 @@ function animate() {
     }
 
     updatePortalAnimations(dt);
+    updateCorridor(STATE, dt);
     updateSkybox(STATE, dt);
     STATE.renderer.render(STATE.scene, STATE.camera);
   });

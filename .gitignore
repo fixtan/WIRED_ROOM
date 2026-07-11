@@ -1,8 +1,11 @@
 # Assets (large binaries - download separately)
 assets/room/*.glb
-assets/avatar/*.vrm
-assets/avatar/*.vrma
-assets/pose/*.vrma
+# assets/avatar/*.vrm
+# assets/avatar/*.vrma
+# assets/pose/*.vrma
+
+# Thumbnails in models.json
+# assets/room/*.webp
 
 # Keep directory structure
 !assets/room/.gitkeep
@@ -12,12 +15,12 @@ assets/pose/*.vrma
 # Public export (user-generated)
 public/
 
-# Thumbnails in models.json
-assets/room/*.webp
-
 # OS
 .DS_Store
 Thumbs.db
+
+# git
+.git
 
 # VSCode
 .history
