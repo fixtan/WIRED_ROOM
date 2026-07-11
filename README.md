@@ -1,6 +1,6 @@
 # WIRED ROOM
 
-3D walkable personal exhibition space built with vanilla JS + Three.js + WebXR.  
+3D walkable personal exhibition space built with vanilla JS + Three.js + WebXR.
 Deploy as static files — no build tools, no server infrastructure.
 
 ## Overview
@@ -20,7 +20,7 @@ cd WIRED_ROOM
 
 ### 2. Download Room Models
 
-Room GLB files are sourced from Sketchfab (all free-licensed).  
+Room GLB files are sourced from Sketchfab (all free-licensed).
 See `assets/room/models.json` for the full list with download URLs.
 
 Download each model's GLB and place it in `assets/room/`:
@@ -72,6 +72,8 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 
 ## Context Menu (Edit Mode)
 
+![WIRED ROOM context menu](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_MENU.webp)
+
 | Menu Item | Description |
 |-----------|-------------|
 | Room Info | Edit title, credits, announcement text |
@@ -110,7 +112,7 @@ room/
 
 ### Unpublishing
 
-Remove `public/` entirely, or just delete/rename `public/manifest.json`.  
+Remove `public/` entirely, or just delete/rename `public/manifest.json`.
 External visitors check for `manifest.json` first — if it's missing, the room is inaccessible.
 
 ### Re-editing in Public Mode

@@ -152,6 +152,39 @@ async function init() {
   }
   if (!S.roomData) S.roomData = DEFAULT_ROOM;
 
+
+  // ── Progress bar ──
+  const loadingSection = document.getElementById('loading-section');
+  const loadingStatus = document.getElementById('loading-status');
+  const loadingBar = document.getElementById('loading-bar-inner');
+  const loadingPercent = document.getElementById('loading-percent');
+  const clickToEnter = document.getElementById('click-to-enter');
+  loadingSection.style.display = 'block';
+
+  let stageBase = 0;   // current stage start %
+  let stageRange = 0;   // current stage width %
+
+  function setStage(base, range, label) {
+    stageBase = base;
+    stageRange = range;
+    loadingStatus.textContent = label;
+    updateBar(base);
+  }
+
+  function updateBar(percent) {
+    const p = Math.min(Math.round(percent), 100);
+    loadingBar.style.width = p + '%';
+    loadingPercent.textContent = p + '%';
+  }
+
+  S._onProgress = (event) => {
+    if (event.total > 0) {
+      const ratio = event.loaded / event.total;
+      updateBar(stageBase + stageRange * ratio);
+    }
+  };
+
+
   // Display room name
   document.getElementById('room-name').textContent = S.roomData.name || '';
   document.title = `${S.roomData.name || 'ROOM'} - WIRED ROOM`;
@@ -185,12 +218,14 @@ async function init() {
   document.body.appendChild(S.renderer.domElement);
 
   // Skybox
+  setStage(0, 5, 'Creating skybox...');
   createSkybox(S, S.roomData.sky);
 
   // Lights
   setupLights(S);
 
   // Build room: GLB or procedural
+  setStage(5, 35, 'Loading room...');
   if (S.roomData.room?.glb) {
     await loadRoomGLB(S, S.roomData.room.glb, S.roomData.room);
   } else {
@@ -198,6 +233,7 @@ async function init() {
   }
 
   // Place objects
+  setStage(40, 5, 'Placing objects...');
   for (const obj of (S.roomData.objects || [])) {
     if (obj.glb) {
       await loadObjectGLB(S, obj);
@@ -212,11 +248,13 @@ async function init() {
   }
 
   // Load VRM avatar
+  setStage(45, 40, 'Loading avatar...');
   if (S.roomData.avatar) {
     await loadPlayerAvatar(S, S.roomData.avatar);
   }
 
   // Controls
+  setStage(85, 10, 'Loading media...');
   setupControls(S);
   setupMenu(S);
   setupEditor(S);
@@ -225,8 +263,18 @@ async function init() {
     // Public mode: also load media from manifest
     await loadManifestMedia(S);
   }
+
+  setStage(95, 5, 'Setting up VR...');
   setupVR(S);
 
+
+  // Done — show click to enter
+  updateBar(100);
+  loadingStatus.textContent = 'Ready';
+  setTimeout(() => {
+    loadingSection.style.display = 'none';
+    clickToEnter.style.display = 'block';
+  }, 400);
 
   // Edit/Public mode toggle KEY [/]
   document.addEventListener('keydown', (e) => {

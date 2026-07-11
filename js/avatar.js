@@ -11,9 +11,9 @@ const vrmLoader = new GLTFLoader();
 vrmLoader.register((parser) => new VRMLoaderPlugin(parser));
 vrmLoader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
-function loadVRM(url) {
+function loadVRM(url, onProgress) {
   return new Promise((resolve, reject) => {
-    vrmLoader.load(url, resolve, undefined, reject);
+    vrmLoader.load(url, resolve, onProgress || undefined, reject);
   });
 }
 
@@ -35,7 +35,7 @@ export async function loadPlayerAvatar(S, avatarConfig) {
   if (!avatarConfig?.vrm) return;
 
   try {
-    const gltf = await loadVRM(avatarConfig.vrm);
+    const gltf = await loadVRM(avatarConfig.vrm, S._onProgress);
     const vrm = gltf.userData.vrm;
     if (!vrm) {
       console.error('[ROOM] No VRM data found in:', avatarConfig.vrm);

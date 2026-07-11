@@ -119,8 +119,10 @@ canvas {
    ============================================================ */
 #setup-wizard {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.95);
   display: flex;
   align-items: center;
@@ -302,8 +304,14 @@ canvas {
   background: #0a0a0a;
 }
 
-.sky-card:hover { border-color: #0a0; }
-.sky-card.selected { border-color: #0f0; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+.sky-card:hover {
+  border-color: #0a0;
+}
+
+.sky-card.selected {
+  border-color: #0f0;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
 
 .sky-preview {
   width: 100%;
@@ -328,8 +336,8 @@ canvas {
   background: linear-gradient(to bottom, #000000 0%, #0a0a1a 50%, #001100 100%);
   background-image:
     linear-gradient(to bottom, #000000, #0a0a1a, #001100),
-    repeating-linear-gradient(0deg, transparent, transparent 7px, rgba(0,255,0,0.05) 8px),
-    repeating-linear-gradient(90deg, transparent, transparent 7px, rgba(0,255,0,0.05) 8px);
+    repeating-linear-gradient(0deg, transparent, transparent 7px, rgba(0, 255, 0, 0.05) 8px),
+    repeating-linear-gradient(90deg, transparent, transparent 7px, rgba(0, 255, 0, 0.05) 8px);
 }
 
 /* ============================================================
@@ -488,8 +496,10 @@ canvas {
    ============================================================ */
 #room-info-form {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
@@ -642,4 +652,41 @@ canvas {
 
 #media-panel .info-field input:focus {
   border-color: #0f0;
+}
+
+
+/* Loading progress bar */
+#loading-section {
+  text-align: center;
+}
+
+#loading-status {
+  color: #00ff88;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  margin-bottom: 8px;
+  min-height: 1.2em;
+}
+
+#loading-bar-outer {
+  width: 260px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+#loading-bar-inner {
+  width: 0%;
+  height: 100%;
+  background: #00ff88;
+  transition: width 0.3s ease;
+}
+
+#loading-percent {
+  color: rgba(0, 255, 136, 0.6);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  margin-top: 6px;
 }

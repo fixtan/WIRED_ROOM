@@ -11,9 +11,9 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/');
 gltfLoader.setDRACOLoader(dracoLoader);
 
-export function loadGLB(url) {
+export function loadGLB(url, onProgress) {
   return new Promise((resolve, reject) => {
-    gltfLoader.load(url, resolve, undefined, reject);
+    gltfLoader.load(url, resolve, onProgress || undefined, reject);
   });
 }
 
@@ -22,7 +22,7 @@ export function loadGLB(url) {
 // ============================================================
 export async function loadRoomGLB(S, glbPath, roomConfig) {
   try {
-    const gltf = await loadGLB(glbPath);
+    const gltf = await loadGLB(glbPath, S._onProgress);
     const model = gltf.scene;
 
     // Apply scale/position/rotation
