@@ -13,7 +13,7 @@ assets/room/*.glb
 !assets/pose/.gitkeep
 
 # Public export (user-generated)
-public/
+# public/
 
 # OS
 .DS_Store

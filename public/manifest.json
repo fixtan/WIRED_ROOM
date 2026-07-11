@@ -1,0 +1,91 @@
+{
+  "name": "cartoon kitchen interior",
+  "spawn": [
+    -1.3,
+    0,
+    0
+  ],
+  "room": {
+    "glb": "room.glb",
+    "scale": 5,
+    "pos": [
+      -0.3,
+      0,
+      0
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ]
+  },
+  "avatar": {
+    "vrm": null,
+    "animations": {
+      "idle": "idle.vrma",
+      "walk": "walk.vrma"
+    }
+  },
+  "sky": {
+    "preset": "night"
+  },
+  "media": [
+    {
+      "type": "credit",
+      "pos": [
+        0.55,
+        1.23,
+        -2.48
+      ],
+      "rot": [
+        0,
+        0,
+        0
+      ],
+      "scale": 1.7,
+      "creditData": {
+        "name": "cartoon kitchen interior",
+        "author": "Tsybe",
+        "license": "Free Standard",
+        "creditList": "GitHub Pages用のテストルーム"
+      }
+    },
+    {
+      "type": "image",
+      "file": "media_1783812309802.webp",
+      "pos": [
+        -2.11,
+        1.26,
+        -1.82
+      ],
+      "rot": [
+        0,
+        90,
+        0
+      ],
+      "scale": 1.5,
+      "label": "",
+      "url": ""
+    },
+    {
+      "type": "figurine",
+      "vrm": "default.vrm",
+      "pose": "pose.vrma",
+      "pos": [
+        0.18,
+        0,
+        2.49
+      ],
+      "rot": [
+        0,
+        0,
+        0
+      ],
+      "scale": 1,
+      "label": "",
+      "url": ""
+    }
+  ],
+  "objects": [],
+  "portals": []
+}
