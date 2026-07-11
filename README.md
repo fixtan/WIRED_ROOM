@@ -40,6 +40,19 @@ Upload the entire folder to any static file server (Netlify, GitHub Pages, Apach
 
 No build step. No npm install. Just files on a server.
 
+### Hosting Requirements
+
+Cross-room portal navigation requires CORS headers on your server. Your server must return the following header for `.glb`, `.vrm`, `.vrma`, and media files:
+
+`Access-Control-Allow-Origin: *`
+
+**CORS enabled by default:** Netlify, Cloudflare Pages, Vercel, GitHub Pages
+
+**Requires configuration:** Apache (`.htaccess`), nginx (`add_header` directive)
+
+If your server doesn't support CORS, you can host room assets (GLB, VRM, media) on a CORS-enabled CDN and reference them from your room.
+
+
 ## Setup Wizard
 
 On first launch, a 4-step wizard guides you through:
