@@ -1,6 +1,7 @@
 [
-  { "name": "lain's lab", "url": "https://lain-lab.com/room/", "description": "Three.js game & art gallery" },
-  { "name": "lain's lab", "url": "https://lain-lab.com/room2/", "description": "Three.js game & art gallery" },
-  { "name": "lain's lab", "url": "https://lain-lab.com/room3/", "description": "Three.js game & art gallery" },
-  { "name": "lain's lab", "url": "https://lain-lab.com/room4/", "description": "Three.js game & art gallery" }
+  { "name": "lain's room", "url": "https://lain-lab.com/room/", "description": "メインルーム。VRMフィギュアとポータル" },
+  { "name": "sample room 02", "url": "https://lain-lab.com/room2/", "description": "展示テスト用ルーム" },
+  { "name": "card game art room", "url": "https://lain-lab.com/room3/", "description": "神経衰弱ゲームのカードイラストと動画を展示" },
+  { "name": "room 04", "url": "https://lain-lab.com/room4/", "description": "テストルーム" },
+  { "name": "GitHub Pages room", "url": "https://fixtan.github.io/WIRED_ROOM/", "description": "GitHub Pages test deployment" }
 ]
