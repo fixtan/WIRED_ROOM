@@ -51,9 +51,8 @@ canvas {
 #ui-overlay {
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  right: 20px;
+  text-align: right;
   pointer-events: none;
   z-index: 10;
 }
