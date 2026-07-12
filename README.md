@@ -96,6 +96,8 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 | Fullscreen | Toggle fullscreen |
 | Take Thumbnail | Capture room screenshot, saved to IndexedDB |
 | Export ZIP | Download deployable ZIP for publishing |
+| Import ZIP | Restore room from a previously exported ZIP |
+| Clear All Data | Delete all data (IndexedDB + localStorage) and restart |
 | Add Custom Room | Upload your own GLB room model |
 | Adjust Room | Scale, position, rotation sliders |
 | Add Image | Upload and place images in the room |
@@ -137,6 +139,28 @@ Press `/` (slash) to toggle back into edit mode while `public/` exists.
 ### manifest.json
 
 Contains all placement data (coordinates, scale, rotation) for every object in the room. You can hand-edit the values directly if needed.
+
+## Backup and Restore
+
+Your room data lives in the browser (localStorage + IndexedDB). Use Export/Import ZIP to back up and restore everything.
+
+### Backup
+
+**Export ZIP** saves the complete room state: room GLB, all placed media (images, videos), VRM figurine with pose, credit board content, portal placements, and all coordinates/scales.
+
+### Restore
+
+**Import ZIP** restores a room from a previously exported ZIP. This overwrites all current data — you'll be prompted to back up first.
+
+### Switching Between Rooms
+
+1. Export current room as ZIP (backup)
+2. Clear All Data
+3. Import a different ZIP
+
+### Clear All Data
+
+Deletes all localStorage and IndexedDB data. The setup wizard will appear on next load. Use this before importing to ensure a clean state.
 
 ## Directory Structure
 
