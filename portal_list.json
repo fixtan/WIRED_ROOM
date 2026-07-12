@@ -3,5 +3,5 @@
   { "name": "sample room 02", "url": "https://lain-lab.com/room2/", "description": "展示テスト用ルーム" },
   { "name": "card game art room", "url": "https://lain-lab.com/room3/", "description": "神経衰弱ゲームのカードイラストと動画を展示" },
   { "name": "room 04", "url": "https://lain-lab.com/room4/", "description": "テストルーム" },
-  { "name": "GitHub Pages room", "url": "https://fixtan.github.io/WIRED_ROOM/", "description": "GitHub Pages test deployment" }
+  { "name": "GitHub Pages room", "url": "https://fixtan.github.io/WIRED_ROOM/", "image": "https://fixtan.github.io/WIRED_ROOM/banner.webp", "description": "GitHub Pages test deployment" }
 ]
