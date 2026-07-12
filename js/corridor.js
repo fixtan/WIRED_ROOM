@@ -95,7 +95,11 @@ export async function enterCorridor(S) {
   await buildPlaza(S);
 
   // Set sky
-  S.scene.background = new THREE.Color('#55aaee');
+  createSkybox(S, { preset: 'day' });
+
+  // Hide room skybox
+  if (S.skyMesh) S.skyMesh.visible = false;
+  if (S.cloudMesh) S.cloudMesh.visible = false;
 
   // Teleport player
   S.playerPos.set(0, 0.5, 2);
@@ -207,6 +211,12 @@ export function updateCorridor(S, dt) {
 async function buildPlaza(S) {
   decorations = [];
 
+
+  const skyGeo = new THREE.SphereGeometry(180, 32, 32);
+  const skyMat = new THREE.MeshBasicMaterial({ color: '#55aaee', side: THREE.BackSide });
+  const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+  group.add(skyMesh);
+
   // ── Load grass GLB as ground ──
   try {
     const gltf = await loadGLB(GRASS_GLB_PATH);
@@ -271,12 +281,9 @@ async function buildPlaza(S) {
 
   // ── Decorations ──
   const decoItems = [
-
     { path: './assets/models/barrel.glb',       pos: [7.2, 0.5, 1.48], scale: 1.8 },
-
     { path: './assets/models/flowers-tall.glb', pos: [6.2, 0.5, 1.79], scale: 1.0 },
     { path: './assets/models/flowers.glb',      pos: [6.68, 0.5, 1.02], scale: 0.8 },
-
   ];
   for (const deco of decoItems) {
     try {
