@@ -7,6 +7,7 @@ import { setupControls, update } from './js/controls.js';
 import { loadConfig, showSetupWizard, buildRoomDataFromConfig } from './js/setup.js';
 import { setupMenu } from './js/menu.js';
 import { setupVR, updateVR, isVRActive } from './js/vr.js';
+import { initVRHint, disposeVRHint } from './js/vr-ui.js';
 import { setupEditor } from './js/editor.js';
 import { setupMedia } from './js/media.js';
 import { updateCorridor , prefetchPortalList } from './js/corridor.js';
@@ -199,6 +200,9 @@ export function disposeRoom(S) {
   S.colliders = [];
   S.colliderMeshes = [];
   S.portalMeshes = [];
+
+  // Dispose VR hint UI
+  disposeVRHint();
 
   // Clear portal animations
   clearAllPortalAnimations();
@@ -417,6 +421,7 @@ async function init() {
   await setupMedia(S);
   await prefetchPortalList();// ポータルリストをキャッシュ
   setupVR(S);
+  initVRHint(S.scene);  // VR hint UI
 
   // Edit/Public mode toggle KEY [/]
   document.addEventListener('keydown', (e) => {
@@ -571,11 +576,11 @@ async function loadManifestMedia(S) {
 
       } else if (item.type === 'credit') {
         const cd = item.creditData || {};
-        let lines = [`── ${cd.name || 'Room'} ──`, ''];
+        let lines = [`── ${cd.name || 'Room'} ──`];
         if (cd.author) lines.push(`Room by: ${cd.author}`);
         if (cd.license) lines.push(`License: ${cd.license}`);
         if (cd.creditList) {
-          lines.push('', '── Credits ──', '');
+          lines.push('');
           lines = lines.concat(cd.creditList.split('\n').filter(l => l.trim()));
         }
         const canvas = document.createElement('canvas');

@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import { updateAvatar } from './avatar.js';
 import { enterCorridor, exitCorridor, isInCorridor } from './corridor.js';
+import { isVRActive } from './vr.js';
+import { showVRHint, hideVRHint } from './vr-ui.js';
 
 
 let stateRef = null;
@@ -157,14 +159,22 @@ export function checkPortalProximity(S) {
   }
 
   if (nearestPortal) {
-    promptEl.style.display = 'block';
-    promptEl.textContent = `[E] ${nearestPortal.userData.label}`;
+    // Always set dataset (used by tryPortalInteract)
     promptEl.dataset.url = nearestPortal.userData.url || '';
     promptEl.dataset.portalType = nearestPortal.userData.portalType || 'global';
+
+    if (isVRActive()) {
+      promptEl.style.display = 'none';
+      showVRHint(nearestPortal.position, '[A] ENTER');
+    } else {
+      promptEl.style.display = 'block';
+      promptEl.textContent = `[E] ${nearestPortal.userData.label}`;
+    }
   } else {
     promptEl.style.display = 'none';
     promptEl.dataset.url = '';
     promptEl.dataset.portalType = '';
+    if (isVRActive()) hideVRHint();
   }
 
   // Animate portal meshes

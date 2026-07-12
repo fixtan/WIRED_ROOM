@@ -413,7 +413,7 @@ async function placePortals(S) {
   for (let i = 0; i < shuffled.length; i++) {
     const portal = shuffled[i];
     const x = startX + i * PORTAL_SPACING;
-    createPortalPoint(S, [x, 0.5, PORTAL_ROW_Z], portal.name, portal.url, portal.description || '', '#00ff88', false);
+    createPortalPoint(S, [x, 0.5, PORTAL_ROW_Z], portal.name, portal.url, portal.description || '', '#00ff88', false, portal.image || '');
 
   }
 
@@ -424,7 +424,7 @@ async function placePortals(S) {
 // ============================================================
 // Create individual portal point with effect + label
 // ============================================================
-function createPortalPoint(S, pos, label, url, description, color, isReturn) {
+function createPortalPoint(S, pos, label, url, description, color, isReturn, imageUrl) {
   const portalGroup = new THREE.Group();
   portalGroup.position.set(pos[0], pos[1], pos[2]);
 
@@ -473,11 +473,31 @@ function createPortalPoint(S, pos, label, url, description, color, isReturn) {
     decorations.push({ type: 'particle', data: particles[i], attr: posAttr, index: i });
   }
 
-  // Label sprite
+  // Label sprite (text fallback, replaced by banner if imageUrl exists)
   const labelSprite = createLabelSprite(label, description, color);
   labelSprite.position.set(0, 2.5, 0);
   labelSprite.scale.set(3, 1.0, 1);
   portalGroup.add(labelSprite);
+
+  // Banner image (async load, replaces text label on success)
+  if (imageUrl && !isReturn) {
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+    loader.load(imageUrl, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const aspect = tex.image.width / tex.image.height; // e.g. 480/120 = 4
+      const bannerMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+      const bannerSprite = new THREE.Sprite(bannerMat);
+      bannerSprite.position.copy(labelSprite.position);
+      bannerSprite.scale.set(3, 3 / aspect, 1);
+      portalGroup.remove(labelSprite);
+      labelSprite.material.map.dispose();
+      labelSprite.material.dispose();
+      portalGroup.add(bannerSprite);
+    }, undefined, (err) => {
+      console.warn('[PLAZA] Banner load failed, keeping text label:', imageUrl, err);
+    });
+  }
 
   // Set portal data for E-key interaction
   portalGroup.userData = { url, label };

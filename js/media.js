@@ -249,11 +249,11 @@ function createCreditBoard(isLoading = false) {
   const creditList = meta.creditList || '';
 
   // Build credit text
-  let lines = [`── ${roomName} ──`, ''];
+  let lines = [`── ${roomName} ──`];
   if (author) lines.push(`Room by: ${author}`);
   if (license) lines.push(`License: ${license}`);
   if (creditList) {
-    lines.push('', '── Credits ──', '');
+    lines.push('');
     lines = lines.concat(creditList.split('\n').filter(l => l.trim()));
   }
 

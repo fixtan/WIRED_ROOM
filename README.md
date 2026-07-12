@@ -140,22 +140,29 @@ Contains all placement data (coordinates, scale, rotation) for every object in t
 
 ```
 room/
+room/
 ├── index.html
-├── app.js              ← entry point: state, init, lights, render loop
+├── app.js              ← init/loadRoom/disposeRoom/loadExternalRoom
 ├── style.css
+├── config.js           ← 共通定数
+├── portal_list.json
 ├── js/
-│   ├── avatar.js       ← VRM loading / animation / update
-│   ├── controls.js     ← input / collision / movement / camera / portals
-│   ├── editor.js       ← GLB upload / Room Info / adjustment sliders
-│   ├── media.js        ← image / video / credit board placement
-│   ├── menu.js         ← right-click context menu
-│   ├── room-loader.js  ← GLB / room / furniture / skybox / portals
-│   ├── setup.js        ← setup wizard / config management
-│   └── vr.js           ← WebXR VR mode / Quest controllers
-└── assets/
-    ├── room/           ← GLB files + models.json + thumbnails
-    ├── pose/           ← pose data for VRM figurines
-    └── avatar/         ← VRM models + .vrma animations
+│   ├── avatar.js       ← disposeAvatar追加
+│   ├── controls.js     ← tryPortalInteract/checkPortalProximity export、@座標デバッグ
+│   ├── corridor.js     ← 広場（旧コリドー）、prefetchPortalList
+│   ├── editor.js       ← Room Info フォーム
+│   ├── media.js        ← ポータルURL削除、portalType
+│   ├── menu.js
+│   ├── portal-effect.js ← 共通エフェクト、clearAllPortalAnimations
+│   ├── room-loader.js  ← onProgress対応
+│   ├── setup.js
+│   └── vr.js           ← VRポータル操作、デバウンス修正
+├── assets/
+│   ├── room/
+│   ├── avatar/
+│   ├── pose/
+│   └── models/         ← Kenney CC0素材（grass, door, flowers, barrel）
+└── public/             ← エクスポート済み公開データ
 ```
 
 ## Data Storage

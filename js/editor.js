@@ -294,8 +294,8 @@ export async function showEditRoomInfo(S) {
         <input type="text" id="rif-url" value="${existingMeta.url || ''}" placeholder="https://..." maxlength="200" />
       </div>
       <div class="info-field">
-        <label>Credit List (room + furniture)</label>
-        <textarea id="rif-credits" placeholder="One credit per line" rows="4">${existingMeta.creditList || ''}</textarea>
+        <label>Message</label>
+        <textarea id="rif-credits" placeholder="お知らせ、備考、クレジットなど自由入力" rows="6">${existingMeta.creditList || ''}</textarea>
       </div>
       <div class="info-stats">
         Triangles: ${triangles.toLocaleString()} / Vertices: ${vertices.toLocaleString()} / Meshes: ${S.colliderMeshes?.length || 0}
