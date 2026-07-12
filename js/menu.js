@@ -205,6 +205,37 @@ function registerDefaultItems() {
       await exportRoom(S);
     }
   });
+
+  addMenuItem({
+    id: 'import-room',
+    label: 'Import ZIP',
+    icon: '📥',
+    action: async (S) => {
+      await importRoom(S);
+    }
+  });
+
+  addMenuItem({ divider: true });
+
+  addMenuItem({
+    id: 'clear-all-data',
+    label: 'Clear All Data',
+    icon: '🗑️',
+    action: async () => {
+      if (!confirm('全データを削除します。\n先にExport ZIPでバックアップを取ってください。\n\n続行しますか？')) return;
+      if (!confirm('本当に削除しますか？この操作は取り消せません。')) return;
+
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem('room_media');
+
+      const Dexie = (await import('dexie')).default;
+      const db = new Dexie('RoomDB');
+      db.version(1).stores({ assets: '' });
+      await db.assets.clear();
+
+      location.reload();
+    }
+  });
 }
 
 // ============================================================
@@ -465,4 +496,173 @@ function downloadBlob(blob, filename) {
     URL.revokeObjectURL(a.href);
     a.remove();
   }, 100);
+}
+
+// ============================================================
+// Import Room from ZIP
+// ============================================================
+async function importRoom(S) {
+  if (!confirm('現在のデータは上書きされます。\n先にExport ZIPでバックアップを取ってください。\n\n続行しますか？')) return;
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.zip';
+
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById('room-name');
+    const origText = statusEl?.textContent || '';
+
+    try {
+      if (statusEl) statusEl.textContent = 'Importing...';
+
+      const JSZip = await loadJSZip();
+      const zip = await JSZip.loadAsync(file);
+
+      // ── 1. Read manifest ──
+      const manifestFile = zip.file('public/manifest.json');
+      if (!manifestFile) {
+        alert('public/manifest.json が見つかりません');
+        if (statusEl) statusEl.textContent = origText;
+        return;
+      }
+      const manifest = JSON.parse(await manifestFile.async('text'));
+
+      const Dexie = (await import('dexie')).default;
+      const db = new Dexie('RoomDB');
+      db.version(1).stores({ assets: '' });
+
+      // ── 2. Clear existing data ──
+      await db.assets.clear();
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem('room_media');
+
+      // ── 3. Store room GLB ──
+      const glbFile = zip.file('public/room.glb');
+      if (glbFile) {
+        const glbData = await glbFile.async('arraybuffer');
+        await db.assets.put(glbData, 'custom_room_imported');
+      }
+
+      // ── 4. Build room_config ──
+      const config = {
+        roomName: manifest.name || 'Imported Room',
+        roomId: 'imported',
+        avatarId: 'avater1',
+        skyPreset: manifest.sky?.preset || 'night',
+        roomDefaults: {
+          scale: manifest.room?.scale || 1,
+          pos: manifest.room?.pos || [0, 0, 0],
+          rot: manifest.room?.rot || [0, 0, 0],
+          spawn: manifest.spawn || [0, 0, 3],
+        },
+        isCustomGLB: true,
+        customGLBKey: 'custom_room_imported',
+        roomFile: null,
+        roomMeta: {},
+      };
+
+      // ── 5. Process media ──
+      const mediaList = [];
+
+      for (const item of manifest.media || []) {
+        const id = `media_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+        if (item.type === 'image' && item.file) {
+          const imgFile = zip.file(`public/${item.file}`);
+          if (imgFile) {
+            const base64 = await imgFile.async('base64');
+            const ext = item.file.split('.').pop().toLowerCase();
+            const mime = ext === 'png' ? 'image/png'
+                       : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg'
+                       : 'image/webp';
+            await db.assets.put(`data:${mime};base64,${base64}`, id);
+          }
+          mediaList.push({
+            id, type: 'image',
+            pos: item.pos, rot: item.rot, scale: item.scale,
+            label: item.label || '', url: item.url || '',
+          });
+
+        } else if (item.type === 'video' && item.file) {
+          const vidFile = zip.file(`public/${item.file}`);
+          if (vidFile) {
+            const arrayBuffer = await vidFile.async('arraybuffer');
+            await db.assets.put(arrayBuffer, id);
+          }
+          mediaList.push({
+            id, type: 'video',
+            pos: item.pos, rot: item.rot, scale: item.scale,
+            label: item.label || '', url: item.url || '',
+          });
+
+        } else if (item.type === 'figurine') {
+          // VRM
+          const vrmFile = zip.file(`public/${item.vrm || 'default.vrm'}`);
+          if (vrmFile) {
+            const vrmData = await vrmFile.async('arraybuffer');
+            await db.assets.put(vrmData, 'custom_vrm');
+            config.avatarId = 'custom';
+          }
+          // Pose
+          const poseFile = zip.file(`public/${item.pose || 'pose.vrma'}`);
+          let poseIndex = 0;
+          if (poseFile) {
+            const poseData = await poseFile.async('arraybuffer');
+            await db.assets.put(poseData, 'pose_custom_imported');
+            poseIndex = 25; // first custom pose slot
+          }
+          mediaList.push({
+            id, type: 'figurine',
+            pos: item.pos, rot: item.rot, scale: item.scale,
+            label: item.label || '', url: item.url || '',
+            poseIndex,
+          });
+
+        } else if (item.type === 'credit') {
+          if (item.creditData) {
+            config.roomMeta = {
+              ...config.roomMeta,
+              author: item.creditData.author || '',
+              license: item.creditData.license || '',
+              creditList: item.creditData.creditList || '',
+            };
+          }
+          mediaList.push({
+            id, type: 'credit',
+            pos: item.pos, rot: item.rot, scale: item.scale,
+          });
+
+        } else if (item.type === 'portal') {
+          mediaList.push({
+            id, type: 'portal',
+            pos: item.pos, rot: item.rot, scale: item.scale,
+            url: item.url || '', label: item.label || '',
+            portalType: item.portalType || 'global',
+          });
+        }
+      }
+
+      // ── 6. Save to localStorage ──
+      localStorage.setItem(LS_KEY, JSON.stringify(config));
+      localStorage.setItem('room_media', JSON.stringify(mediaList));
+
+      console.log('[IMPORT] Complete:', {
+        media: mediaList.length,
+        config: config.roomName,
+      });
+
+      alert('インポート完了。リロードします。');
+      location.reload();
+
+    } catch (e) {
+      console.error('[IMPORT] Failed:', e);
+      if (statusEl) statusEl.textContent = origText;
+      alert('インポート失敗: ' + e.message);
+    }
+  };
+
+  input.click();
 }

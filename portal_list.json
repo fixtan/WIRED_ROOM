@@ -2,6 +2,6 @@
   { "name": "lain's room", "url": "https://lain-lab.com/room/", "image": "https://lain-lab.com/room/banner.webp","description": "メインルーム。VRMフィギュアとポータル" },
   { "name": "sample room 02", "url": "https://lain-lab.com/room2/", "image": "https://lain-lab.com/room2/banner.webp", "description": "展示テスト用ルーム" },
   { "name": "card game art room", "url": "https://lain-lab.com/room3/", "image": "https://lain-lab.com/room3/banner.webp","description": "神経衰弱ゲームのカードイラストと動画を展示" },
-  { "name": "room 04", "url": "https://lain-lab.com/room4/", "image": "https://lain-lab.com/room4/banner.webp", "description": "テストルーム" },
+  { "name": "sample room 04", "url": "https://lain-lab.com/room4/", "image": "https://lain-lab.com/room4/banner.webp", "description": "テストルーム" },
   { "name": "GitHub Pages room", "url": "https://fixtan.github.io/WIRED_ROOM/", "image": "https://fixtan.github.io/WIRED_ROOM/banner.webp", "description": "GitHub Pages TECHNICAL LOGS & DEMOS" }
 ]
