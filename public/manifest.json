@@ -31,6 +31,20 @@
   },
   "media": [
     {
+      "type": "portal",
+      "pos": [
+        -2.25, 0.026, -0.21
+      ],
+      "rot": [
+        0,
+        0,
+        0
+      ],
+      "scale": 1,
+      "url": "",
+      "label": "global"
+    },
+    {
       "type": "credit",
       "pos": [
         0.55,
