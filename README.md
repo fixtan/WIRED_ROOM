@@ -80,8 +80,10 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 
 | Input | Action |
 |-------|--------|
-| Thumbstick | Move (headset direction) |
-| Controller ray | Interact |
+| Left Thumbstick | Move (headset direction) |
+| Right Thumbstick | Turn |
+| A Button | Portal interaction |
+| Y Button | Toggle menu |
 
 ## Context Menu (Edit Mode)
 
@@ -156,7 +158,8 @@ room/
 │   ├── portal-effect.js ← 共通エフェクト、clearAllPortalAnimations
 │   ├── room-loader.js  ← onProgress対応
 │   ├── setup.js
-│   └── vr.js           ← VRポータル操作、デバウンス修正
+│   ├── vr.js           ← VRポータル操作、デバウンス修正
+│   └── vr-ui.js        ← VR用3Dヒント表示（汎用スプライト）
 ├── assets/
 │   ├── room/
 │   ├── avatar/
@@ -193,25 +196,43 @@ room/
 - **WebXR** — VR mode for Meta Quest
 - No build tools — `importmap` + CDN
 
-## Portal System (Planned)
+## Portal System
 
-Rooms connect via portals. A shared `portal_list.json` hosted on GitHub serves as the public directory:
+Rooms connect via portals. A shared `portal_list.json` hosted on GitHub serves as the public directory. Registration via Pull Request — merge to publish. No server required.
+
+When entering a portal (or pressing Back), a procedural plaza is generated with portal entrances arranged in a row, each with a banner image or text label showing the destination info.
+
+### portal_list.json Format
 
 ```json
 [
   {
     "name": "Lain's Room",
     "url": "https://lain-lab.com/room/",
-    "homepage": "https://lain-lab.com",
-    "image": "https://lain-lab.com/banner.png",
-    "message": "[2026-07-11]\nLAYER FIGHTER v2.0 released"
+    "image": "https://lain-lab.com/room/banner.webp",
+    "description": "Main room with VRM figurines and portals"
   }
 ]
 ```
 
-Registration via Pull Request. Merge to publish. No server required.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Room name displayed on portal label |
+| `url` | Yes | Full URL to the room |
+| `description` | No | Short description (shown on text label fallback) |
+| `image` | No | Banner image URL (falls back to text label if missing or CORS-blocked) |
 
-When entering a portal, a procedural plaza is generated with portal entrances arranged around the perimeter, each with an info board showing the destination's name, message, and banner image.
+### Banner Image Specs
+
+- **Recommended size:** 480 × 120 px (4:1 aspect ratio)
+- **Format:** WebP or PNG, keep under 30KB
+- **CORS:** The banner URL must be accessible cross-origin. If your server doesn't send `Access-Control-Allow-Origin: *`, the banner silently falls back to a text label. Netlify, GitHub Pages, Vercel, and Cloudflare Pages serve CORS headers by default.
+
+### Portal Types
+
+- **Global Portal** — Loaded from the public `portal_list.json` directory, shown in the plaza for all rooms
+- **Friend Portal** (planned) — Listed only in a room's manifest, creates a private link between rooms
+- **Works Portal** (planned) — Internal links connecting your own rooms as a portfolio
 
 ## Design Principles
 
