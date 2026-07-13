@@ -9,6 +9,19 @@ WIRED ROOM lets you create a 3D room you can walk around in, decorate with image
 
 Rooms connect to each other through portals. No central server — each person hosts their own room on their own domain.
 
+## Live Demos
+
+Deployed on 4 different hosting services — same static files, cross-server VR portal navigation:
+
+| Host | URL |
+|------|-----|
+| Netlify | https://lain-lab.com/room/ |
+| GitHub Pages | https://fixtan.github.io/WIRED_ROOM/ |
+| Vercel | https://room-vercel.vercel.app/ |
+| Cloudflare Pages | https://room-cloudflare.fixjp.workers.dev/ |
+
+All four rooms are connected via portals. You can walk between servers in VR.
+
 ## Getting Started
 
 ### 1. Clone
@@ -46,9 +59,52 @@ Cross-room portal navigation requires CORS headers on your server. Your server m
 
 `Access-Control-Allow-Origin: *`
 
-**CORS enabled by default:** Netlify, Cloudflare Pages, Vercel, GitHub Pages
+### CORS Configuration by Host
 
-**Requires configuration:** Apache (`.htaccess`), nginx (`add_header` directive)
+**GitHub Pages** — CORS enabled by default. No configuration needed.
+
+**Netlify** — Add `_headers` file to root:
+
+```
+/*
+  Access-Control-Allow-Origin: *
+```
+
+**Cloudflare Pages** — Same as Netlify. Add `_headers` file to root:
+
+```
+/*
+  Access-Control-Allow-Origin: *
+```
+
+**Vercel** — Add `vercel.json` to root:
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
+```
+
+Note: Vercel treats `public/` as the output directory by default. Go to **Settings → Build and Deployment → Output Directory** and set it to `.` (override) so the full repo is served.
+
+**Apache** — Add to `.htaccess`:
+
+```
+Header set Access-Control-Allow-Origin "*"
+```
+
+**nginx** — Add to server block:
+
+```
+add_header Access-Control-Allow-Origin "*";
+```
 
 If your server doesn't support CORS, you can host room assets (GLB, VRM, media) on a CORS-enabled CDN and reference them from your room.
 
