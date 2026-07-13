@@ -545,7 +545,7 @@ async function loadManifestMedia(S) {
         const vrm = gltf.userData.vrm;
         if (!vrm) continue;
         VRMUtils.removeUnnecessaryVertices(vrm.scene);
-        VRMUtils.removeUnnecessaryJoints(vrm.scene);
+        VRMUtils.combineSkeletons(vrm.scene);
         const group = new THREE.Group();
         group.add(vrm.scene);
         group.position.set(...(item.pos || [0, 0, 0]));
@@ -563,7 +563,10 @@ async function loadManifestMedia(S) {
             const poseGltf = await _loadGLTF(item.pose);
             const vrmAnim = poseGltf.userData.vrmAnimations?.[0];
             if (vrmAnim) {
+              const _warn = console.warn;
+              console.warn = () => {};
               const clip = createVRMAnimationClip(vrmAnim, vrm);
+              console.warn = _warn;
               const mixer = new THREE.AnimationMixer(vrm.scene);
               const action = mixer.clipAction(clip);
               action.play();

@@ -44,7 +44,7 @@ export async function loadPlayerAvatar(S, avatarConfig) {
 
     // Optimize
     VRMUtils.removeUnnecessaryVertices(vrm.scene);
-    VRMUtils.removeUnnecessaryJoints(vrm.scene);
+    VRMUtils.combineSkeletons(vrm.scene);
 
     // Setup
     playerVrm = vrm;
@@ -74,7 +74,10 @@ export async function loadPlayerAvatar(S, avatarConfig) {
           const animGltf = await loadVRM(url);
           const vrmAnim = animGltf.userData.vrmAnimations?.[0];
           if (vrmAnim) {
+            const _warn = console.warn;
+            console.warn = () => {};
             vrmAnims[id] = createVRMAnimationClip(vrmAnim, vrm);
+            console.warn = _warn;
             console.log(`[ROOM] Animation loaded: ${id}`);
           }
         } catch (e) {
