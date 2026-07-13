@@ -307,6 +307,13 @@ function _trackSceneAdditions(S) {
 // Load external room (SPA mode for VR portal navigation)
 // ============================================================
 export async function loadExternalRoom(S, url) {
+  // fade scene
+  const fade = document.getElementById('scene-fade');
+
+  // Fade out
+  fade.classList.add('active');
+  await new Promise(r => setTimeout(r, 400));
+
   // Ensure URL ends with /
   const baseUrl = url.endsWith('/') ? url : url + '/';
 
@@ -316,6 +323,7 @@ export async function loadExternalRoom(S, url) {
     if (!res.ok) throw new Error('Not found');
   } catch (e) {
     console.warn('[ROOM] CORS check failed:', baseUrl, e);
+    fade.classList.remove('active');  // ← 追加
     const promptEl = document.getElementById('portal-prompt');
     promptEl.style.display = 'block';
     promptEl.textContent = 'This room does not support VR portal. Remove headset to visit.';
@@ -330,6 +338,7 @@ export async function loadExternalRoom(S, url) {
     manifest = await res.json();
   } catch (e) {
     console.error('[ROOM] Failed to fetch manifest:', e);
+    fade.classList.remove('active');  // ← 追加
     return false;
   }
 
@@ -345,6 +354,9 @@ export async function loadExternalRoom(S, url) {
 
   // Load new room
   await loadRoom(S, roomData, false);
+
+  // Fade in
+  fade.classList.remove('active');
 
   return true;
 }

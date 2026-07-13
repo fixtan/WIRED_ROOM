@@ -125,8 +125,21 @@ export async function exitCorridor(S, url) {
       const { loadExternalRoom } = await import('../app.js');
       cleanupPlaza(S);
       await loadExternalRoom(S, url);
-    } else {
-      window.location.href = url;
+     } else {
+      console.log('FADE: exitCorridor PC path', url);
+      const fade = document.getElementById('scene-fade');
+      fade.style.transition = 'none';
+      fade.style.opacity = '0';
+      fade.style.display = 'block';
+      // Force to opacity 1 with transition
+      requestAnimationFrame(() => {
+        fade.style.transition = 'opacity 0.5s ease';
+        fade.style.opacity = '1';
+        fade.addEventListener('transitionend', () => {
+          window.location.href = url;
+        }, { once: true });
+      });
+      return; // prevent falling through
     }
     return;
   }
