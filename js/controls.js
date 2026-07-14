@@ -125,13 +125,15 @@ export function tryPortalInteract() {
   if (!promptEl.dataset.url && !promptEl.dataset.portalType) return;
 
   const url = promptEl.dataset.url;
+  const portalType = promptEl.dataset.portalType || 'global';
 
   if (isInCorridor()) {
     // In corridor: navigate to URL or return
     exitCorridor(stateRef, url);
   } else {
+    console.log('[CONTROLS] portalType from dataset:', portalType);
     // In room: enter corridor
-    enterCorridor(stateRef);
+    enterCorridor(stateRef, portalType);  // ← portalType を渡す
   }
 }
 

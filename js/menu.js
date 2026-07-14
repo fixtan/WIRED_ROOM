@@ -347,6 +347,23 @@ async function exportRoom(S) {
     const manifest = buildManifest(config, mediaList, mediaFileMap);
     zip.file('public/manifest.json', JSON.stringify(manifest, null, 2));
 
+    // ── 6b. Generate portal list JSONs from friend/works portals ──
+    let friendPortals = [];
+    try {
+      friendPortals = JSON.parse(localStorage.getItem('friend_portal_list') || '[]');
+    } catch (e) { /* ignore */ }
+    if (friendPortals.length > 0) {
+      zip.file('public/portal_list_private.json', JSON.stringify(friendPortals, null, 2));
+    }
+
+    let worksPortals = [];
+    try {
+      worksPortals = JSON.parse(localStorage.getItem('works_portal_list') || '[]');
+    } catch (e) { /* ignore */ }
+    if (worksPortals.length > 0) {
+      zip.file('public/portal_list_works.json', JSON.stringify(worksPortals, null, 2));
+    }
+
     // ── 7. Generate and download ZIP ──
     const blob = await zip.generateAsync({ type: 'blob' });
     const roomName = (config.roomName || 'my-room').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -439,6 +456,7 @@ function buildManifest(config, mediaList, mediaFileMap = {}) {
     } else if (item.type === 'portal') {
       manifest.media.push({
         type: 'portal',
+        portalType: item.portalType || 'global',
         pos: item.pos,
         rot: item.rot,
         scale: item.scale,

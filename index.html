@@ -33,6 +33,25 @@
       <p id="click-to-enter" style="display:none;">Click to Enter</p>
     </div>
 
+    <!-- Friend Portal Editor -->
+    <div id="portal-editor" style="display:none;">
+      <div class="info-form-container" style="width:480px; max-height:80vh; overflow-y:auto;">
+        <h3 id="portal-editor-title">FRIEND PORTAL LIST</h3>
+        <div id="portal-editor-list"></div>
+        <div style="margin-top:12px; border-top:1px solid #1a1a1a; padding-top:12px;">
+          <div class="info-field"><label>Name</label><input id="pe-name" type="text" placeholder="Room name" /></div>
+          <div class="info-field"><label>URL</label><input id="pe-url" type="text" placeholder="https://..." /></div>
+          <div class="info-field"><label>Banner Image</label><input id="pe-image" type="text" placeholder="https://.../banner.webp" /></div>
+          <div class="info-field"><label>Description</label><input id="pe-desc" type="text" placeholder="Short description" /></div>
+        </div>
+        <div class="info-actions" style="margin-top:12px;">
+          <button id="pe-add">＋ Add</button>
+          <button id="pe-save">💾 Save & Close</button>
+          <button id="pe-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Setup Wizard -->
     <div id="setup-wizard" style="display:none;">
       <div class="setup-container">

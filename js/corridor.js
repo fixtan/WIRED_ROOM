@@ -63,7 +63,8 @@ export async function prefetchPortalList() {
 // ============================================================
 // Enter plaza mode
 // ============================================================
-export async function enterCorridor(S) {
+export async function enterCorridor(S, portalType = 'global') {
+  console.log('[PLAZA] enterCorridor called, portalType:', portalType);
   if (active) return;
   stateRef = S;
   active = true;
@@ -107,7 +108,7 @@ export async function enterCorridor(S) {
   S.avatarYaw = 0;
 
   // Fetch portal list and place portals
-  await placePortals(S);
+  await placePortals(S, portalType);
 
   console.log('[PLAZA] Entered plaza');
 }
@@ -399,16 +400,46 @@ async function buildPlaza(S) {
 // ============================================================
 // Portal placement
 // ============================================================
-async function placePortals(S) {
-  let portalList = cachedPortalList || [];
+async function placePortals(S, portalType = 'global') {
 
-  // Retry fetch if cache empty
-  if (portalList.length === 0) {
+  console.log('[PLAZA] placePortals called, portalType:', portalType);
+  let portalList = [];
+
+  if (portalType === 'friend' || portalType === 'works') {
+    const jsonFile = portalType === 'friend'
+      ? './public/portal_list_private.json'
+      : './public/portal_list_works.json';
+    const storageKey = portalType === 'friend'
+      ? 'friend_portal_list'
+      : 'works_portal_list';
+
+    // Try public file first (public mode)
     try {
-      const res = await fetch(PORTAL_LIST_URL);
-      if (res.ok) portalList = await res.json();
-    } catch (e) {
-      console.warn('[PLAZA] Failed to fetch portal list:', e);
+      const res = await fetch(jsonFile);
+      if (res.ok) {
+        portalList = await res.json();
+      }
+    } catch (e) { /* ignore */ }
+    // Fallback: build from localStorage (edit mode)
+    if (portalList.length === 0) {
+      try {
+        portalList = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      } catch (e) { /* ignore */ }
+    }
+    // Filter out empty URLs
+    portalList = portalList.filter(p => p.url);
+    console.log(`[PLAZA] ${portalType} portals loaded:`, portalList.length);
+
+  } else {
+    // Global portals from GitHub
+    portalList = cachedPortalList || [];
+    if (portalList.length === 0) {
+      try {
+        const res = await fetch(PORTAL_LIST_URL);
+        if (res.ok) portalList = await res.json();
+      } catch (e) {
+        console.warn('[PLAZA] Failed to fetch portal list:', e);
+      }
     }
   }
 
@@ -416,21 +447,21 @@ async function placePortals(S) {
   const selfUrl = window.location.href.replace(/\/?$/, '/');
   portalList = portalList.filter(p => p.url.replace(/\/?$/, '/') !== selfUrl);
 
-  // Shuffle and pick up to MAX_PORTALS
+  // Shuffle and pick
   const shuffled = portalList.sort(() => Math.random() - 0.5).slice(0, MAX_PORTALS);
+  const colorMap = { global: '#00ff88', friend: '#4488ff', works: '#ffaa00' };
+  const color = colorMap[portalType] || '#00ff88';
 
-  // Calculate positions — horizontal row centered on X axis
   const totalWidth = (shuffled.length - 1) * PORTAL_SPACING;
   const startX = -totalWidth / 2;
 
   for (let i = 0; i < shuffled.length; i++) {
     const portal = shuffled[i];
     const x = startX + i * PORTAL_SPACING;
-    createPortalPoint(S, [x, 0.5, PORTAL_ROW_Z], portal.name, portal.url, portal.description || '', '#00ff88', false, portal.image || '');
-
+    createPortalPoint(S, [x, 0.5, PORTAL_ROW_Z], portal.name, portal.url, portal.description || '', color, false, portal.image || '');
   }
 
-  // Return portal (behind player)
+  // Return portal
   createPortalPoint(S, [0, 0.5, RETURN_Z], '← RETURN', '__return__', 'Back to your room', '#ff4422', true);
 }
 

@@ -24,7 +24,8 @@ export const PORTAL_TRIGGER_DIST = 1.5;
 
 export const PORTAL_COLORS = {
   global: '#00ff88',
-  friend: '#ff8800',
+  friend: '#4488ff',
+  works:  '#ffaa00',
 };
 
 export const PORTAL_RING_COUNT = 3;

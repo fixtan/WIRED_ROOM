@@ -12,6 +12,7 @@ import { setupEditor } from './js/editor.js';
 import { setupMedia } from './js/media.js';
 import { updateCorridor , prefetchPortalList } from './js/corridor.js';
 import { createPortalEffect, updatePortalAnimations, clearAllPortalAnimations } from './js/portal-effect.js';
+import { initPortalEditor } from './js/portal-editor.js';
 import { PORTAL_COLORS } from './config.js';
 
 // Patch Three.js for BVH accelerated raycasting
@@ -366,6 +367,9 @@ export async function loadExternalRoom(S, url) {
 // ============================================================
 async function init() {
   const S = STATE;
+
+  // portal editor UI
+  initPortalEditor();
 
   // Init progress bar elements
   initProgressBar();

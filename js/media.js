@@ -6,6 +6,7 @@ import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-v
 import Dexie from 'dexie';
 import { PORTAL_COLORS } from '../config.js';
 import { addMenuItem } from './menu.js';
+import { openPortalEditor } from './portal-editor.js';
 import { createPortalEffect, updatePortalAnimations, removePortalAnimation } from './portal-effect.js';
 
 
@@ -88,6 +89,46 @@ export async function setupMedia(S) {
     icon: '🌀',
     action: () => {
       placePortal(`portal_${Date.now()}`, null, '', 'global');
+    },
+  });
+
+  // MENU: フレンドポータル
+  addMenuItem({
+    id: 'add-friend-portal',
+    label: 'Add Friend Portal',
+    icon: '🔗',
+    action: () => {
+      placePortal(`portal_${Date.now()}`, null, '', 'friend');
+    },
+  });
+
+  // MENU: フレンドリスト編集
+  addMenuItem({
+    id: 'edit-friend-list',
+    label: 'Edit Friend List',
+    icon: '📋',
+    action: () => {
+      openPortalEditor('friend');
+    },
+  });
+
+  // MENU: ワークスポータル
+  addMenuItem({
+    id: 'add-works-portal',
+    label: 'Add Works Portal',
+    icon: '🎨',
+    action: () => {
+      placePortal(`portal_${Date.now()}`, null, '', 'works');
+    },
+  });
+
+  // MENU: ワークスリスト編集
+  addMenuItem({
+    id: 'edit-works-list',
+    label: 'Edit Works List',
+    icon: '📋',
+    action: () => {
+      openPortalEditor('works');
     },
   });
 
@@ -389,7 +430,8 @@ async function addCustomPose() {
 // Place Portal (WavyRing effect)　ポータル
 // ============================================================
 function placePortal(id, savedData, url, label) {
-  const portalType = savedData?.portalType || (label === 'friend' ? 'friend' : 'global');
+  const VALID_TYPES = ['global', 'friend', 'works'];
+  const portalType = savedData?.portalType || (VALID_TYPES.includes(label) ? label : 'global');
 
   const { group } = createPortalEffect(portalType);
 
@@ -804,6 +846,7 @@ function saveMediaList() {
     if (item.type === 'portal') {
       entry.url = item.data.url || '';
       entry.label = item.data.label || '';
+      entry.portalType = item.data.portalType || 'global';  // ← これを追加
     }
 
     return entry;

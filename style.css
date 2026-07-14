@@ -707,3 +707,63 @@ canvas {
 #scene-fade.active {
   opacity: 1;
 }
+
+
+/* ============================================================
+   Friend Portal Editor
+ ============================================================ */
+
+#portal-editor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+}
+
+.pe-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.pe-item img {
+  width: 60px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.pe-item-info {
+  flex: 1;
+  font-size: 11px;
+  color: #0f0;
+  overflow: hidden;
+}
+
+.pe-item-name {
+  font-weight: bold;
+}
+
+.pe-item-url {
+  font-size: 9px;
+  color: #0a0;
+  word-break: break-all;
+}
+
+.pe-item button {
+  background: none;
+  border: 1px solid #a00;
+  color: #f44;
+  font-size: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 2px;
+}
