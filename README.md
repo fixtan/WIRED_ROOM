@@ -160,7 +160,11 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 | Add Video | Upload and place MP4 videos |
 | Credit Board | Display room credits or announcement messages |
 | Add My Avatar | Place your VRM as a figurine with pose |
-| Add Portal | Create a warp point to another room |
+| Add Portal | Create a global portal to another room |
+| Add Friend Portal | Create a friend portal (blue) |
+| Edit Friend List | Manage friend portal destinations |
+| Add Works Portal | Create a works portal (yellow) |
+| Edit Works List | Manage works portal destinations |
 
 All placed objects (images, videos, credit boards, avatars, portals) can be re-edited by double-clicking them.
 
@@ -235,6 +239,7 @@ room/
 │   ├── editor.js       ← Room Info フォーム
 │   ├── media.js        ← ポータルURL削除、portalType
 │   ├── menu.js
+│   ├── portal-editor.js ← Friend/Worksポータルリスト編集UI
 │   ├── portal-effect.js ← 共通エフェクト、clearAllPortalAnimations
 │   ├── room-loader.js  ← onProgress対応
 │   ├── setup.js
@@ -256,6 +261,8 @@ room/
 |-----|----------|
 | `room_config` | Wizard settings (roomId, avatarId, skyPreset, roomDefaults, roomMeta) |
 | `room_media` | Media placement metadata array |
+| `friend_portal_list` | Friend portal entries (JSON array) |
+| `works_portal_list` | Works portal entries (JSON array) |
 
 ### IndexedDB: RoomDB.assets (binary / large data)
 
@@ -310,9 +317,15 @@ When entering a portal (or pressing Back), a procedural plaza is generated with 
 
 ### Portal Types
 
-- **Global Portal** — Loaded from the public `portal_list.json` directory, shown in the plaza for all rooms
-- **Friend Portal** (planned) — Listed only in a room's manifest, creates a private link between rooms
-- **Works Portal** (planned) — Internal links connecting your own rooms as a portfolio
+Three portal types, each with its own color and data source:
+
+| Type | Color | Data Source | Use Case |
+|------|-------|-------------|----------|
+| **Global** | Green (#00ff88) | `portal_list.json` on GitHub | Public directory — all rooms |
+| **Friend** | Blue (#4488ff) | `portal_list_private.json` / localStorage | Private links between rooms |
+| **Works** | Yellow (#ffaa00) | `portal_list_works.json` / localStorage | Your own rooms as a portfolio |
+
+Friend and Works portals are managed via the in-room editor (right-click → **Edit Friend List** / **Edit Works List**). Each entry has name, URL, banner image, and description. Portal lists are included in the exported ZIP as `public/portal_list_private.json` and `public/portal_list_works.json`.
 
 ## Design Principles
 
