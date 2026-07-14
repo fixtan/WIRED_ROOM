@@ -330,6 +330,12 @@ Friend and Works portals are managed via the in-room editor (right-click → **E
 
 ![WIRED ROOM Edit portal List](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_EDIT_PORTAL.webp)
 
+### Registering Your Room
+
+To add your room to the global portal directory, contact via
+https://lain-lab.com/contact with your room name, URL, and banner image.
+
+
 ## Design Principles
 
 - **No server.** Static files only.
