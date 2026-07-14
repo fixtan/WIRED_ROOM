@@ -143,7 +143,7 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 
 ## Context Menu (Edit Mode)
 
-![WIRED ROOM context menu](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_MENU.webp)
+![WIRED ROOM context menu](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_MENU.webp?)
 
 | Menu Item | Description |
 |-----------|-------------|
@@ -326,6 +326,9 @@ Three portal types, each with its own color and data source:
 | **Works** | Yellow (#ffaa00) | `portal_list_works.json` / localStorage | Your own rooms as a portfolio |
 
 Friend and Works portals are managed via the in-room editor (right-click → **Edit Friend List** / **Edit Works List**). Each entry has name, URL, banner image, and description. Portal lists are included in the exported ZIP as `public/portal_list_private.json` and `public/portal_list_works.json`.
+
+
+![WIRED ROOM Edit portal List](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_EDIT_PORTAL.webp)
 
 ## Design Principles
 
