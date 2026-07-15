@@ -11,7 +11,7 @@ Rooms connect to each other through portals. No central server — each person h
 
 ## Live Demos
 
-Deployed on 4 different hosting services — same static files, cross-server VR portal navigation:
+Deployed on 5 different hosting services — same static files, cross-server VR portal navigation:
 
 | Host | URL |
 |------|-----|
@@ -19,8 +19,9 @@ Deployed on 4 different hosting services — same static files, cross-server VR 
 | GitHub Pages | https://fixtan.github.io/WIRED_ROOM/ |
 | Vercel | https://room-vercel.vercel.app/ |
 | Cloudflare Pages | https://room-cloudflare.fixjp.workers.dev/ |
+| Render | https://room-render.onrender.com/ |
 
-All four rooms are connected via portals. You can walk between servers in VR.
+All five rooms are connected via portals. You can walk between servers in VR.
 
 ## Getting Started
 
@@ -105,6 +106,8 @@ Header set Access-Control-Allow-Origin "*"
 ```
 add_header Access-Control-Allow-Origin "*";
 ```
+
+**Render** — The `_headers` file does NOT work on Render Static Sites. You must configure headers via the dashboard: go to your Static Site → **Headers** → **Add Rule** → set path to `/*`, header name to `Access-Control-Allow-Origin`, and value to `*`.
 
 If your server doesn't support CORS, you can host room assets (GLB, VRM, media) on a CORS-enabled CDN and reference them from your room.
 
