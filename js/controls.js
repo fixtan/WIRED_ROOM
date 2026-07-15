@@ -7,7 +7,7 @@ import { showVRHint, hideVRHint } from './vr-ui.js';
 
 
 let stateRef = null;
-
+const MAX_STEP = 0.5; // Maximum step height for floor following (slope support)
 
 // ============================================================
 // Collision detection (hybrid: Box3 + Raycaster)
@@ -237,12 +237,46 @@ export function update(S, dt) {
   if (!checkCollision(S, _testPos)) S.playerPos.z += _moveDir.z;
 
   // Gravity
+    // Gravity + floor snap
   if (!S.onGround) S.velocity.y -= S.GRAVITY * dt;
   S.playerPos.y += S.velocity.y * dt;
-  if (S.playerPos.y <= 0) {
+
+  // Raycast floor snap (replaces y<=0 only check)
+  _rayOrigin.set(S.playerPos.x, S.playerPos.y + S.PLAYER_HEIGHT, S.playerPos.z);
+  _floorRaycaster.far = S.PLAYER_HEIGHT + 3.0;
+  _floorRaycaster.set(_rayOrigin, _rayDown);
+  const gravFloorHits = _floorRaycaster.intersectObjects(S.colliderMeshes, false);
+  if (gravFloorHits.length > 0) {
+    const groundY = gravFloorHits[0].point.y;
+    if (S.playerPos.y <= groundY) {
+      S.playerPos.y = groundY;
+      S.velocity.y = 0;
+      S.onGround = true;
+    }
+  } else if (S.playerPos.y <= 0) {
     S.playerPos.y = 0;
     S.velocity.y = 0;
     S.onGround = true;
+  }
+
+  // Floor follow (slope support)
+  _rayOrigin.set(S.playerPos.x, S.playerPos.y + S.PLAYER_HEIGHT, S.playerPos.z);
+  _floorRaycaster.set(_rayOrigin, _rayDown);
+  const floorHits = _floorRaycaster.intersectObjects(S.colliderMeshes, false);
+  if (floorHits.length > 0) {
+    const groundY = floorHits[0].point.y;
+    const diff = groundY - S.playerPos.y;
+
+    if (diff > 0 && diff < MAX_STEP) {
+      S.playerPos.y = THREE.MathUtils.lerp(S.playerPos.y, groundY, 0.3);
+      S.velocity.y = 0;
+      S.onGround = true;
+    } else if (diff <= -0.05) {
+      // 足元に床がない → 重力に任せる
+      S.onGround = false;
+    }
+  } else {
+    S.onGround = false;
   }
 
   // 3rd person camera

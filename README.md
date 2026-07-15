@@ -11,7 +11,7 @@ Rooms connect to each other through portals. No central server — each person h
 
 ## Live Demos
 
-Deployed on 5 different hosting services — same static files, cross-server VR portal navigation:
+Deployed on 6 different hosting services — same static files, cross-server VR portal navigation:
 
 | Host | URL |
 |------|-----|
@@ -20,8 +20,9 @@ Deployed on 5 different hosting services — same static files, cross-server VR 
 | Vercel | https://room-vercel.vercel.app/ |
 | Cloudflare Pages | https://room-cloudflare.fixjp.workers.dev/ |
 | Render | https://room-render.onrender.com/ |
+| Deno Deploy | https://room-deno.lain-lab.deno.net/ |
 
-All five rooms are connected via portals. You can walk between servers in VR.
+All six rooms are connected via portals. You can walk between servers in VR.
 
 ## Getting Started
 
@@ -108,6 +109,17 @@ add_header Access-Control-Allow-Origin "*";
 ```
 
 **Render** — The `_headers` file does NOT work on Render Static Sites. You must configure headers via the dashboard: go to your Static Site → **Headers** → **Add Rule** → set path to `/*`, header name to `Access-Control-Allow-Origin`, and value to `*`.
+
+**Deno Deploy** — Not a static file host. Requires a `serve.ts` entry point to serve files. CORS is set in code:
+
+```ts
+import { serveDir } from "https://deno.land/std/http/file_server.ts";
+
+Deno.serve((req) => serveDir(req, {
+  fsRoot: ".",
+  headers: ["Access-Control-Allow-Origin:*"],
+}));
+```
 
 If your server doesn't support CORS, you can host room assets (GLB, VRM, media) on a CORS-enabled CDN and reference them from your room.
 
