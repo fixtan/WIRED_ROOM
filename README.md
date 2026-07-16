@@ -330,6 +330,17 @@ When entering a portal (or pressing Back), a procedural plaza is generated with 
 - **Format:** WebP or PNG, keep under 30KB
 - **CORS:** The banner URL must be accessible cross-origin. If your server doesn't send `Access-Control-Allow-Origin: *`, the banner silently falls back to a text label. Netlify, GitHub Pages, Vercel, and Cloudflare Pages serve CORS headers by default.
 
+
+![WIRED ROOM Banner: Netlify](https://lain-lab.com/room/banner.webp)
+![WIRED ROOM Banner: github](https://fixtan.github.io/WIRED_ROOM/banner.webp)
+![WIRED ROOM Banner: vercel](https://room-vercel.vercel.app/banner.webp)
+![WIRED ROOM Banner: cloudflare](https://room-cloudflare.fixjp.workers.dev/banner.webp)
+![WIRED ROOM Banner: render](https://room-render.onrender.com/aisle/banner.webp)
+![WIRED ROOM Banner: deno](https://room-deno.lain-lab.deno.net/room01/banner.webp)
+
+
+
+
 ### Portal Types
 
 Three portal types, each with its own color and data source:
