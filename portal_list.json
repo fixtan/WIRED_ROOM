@@ -6,6 +6,6 @@
   { "name": "Render Pages room", "url": "https://room-render.onrender.com/aisle/", "image": "https://room-render.onrender.com/aisle/banner.webp", "description": "Render Pages TECHNICAL LOGS & DEMOS" },
   { "name": "Deno Pages room", "url": "https://room-deno.lain-lab.deno.net/room01/", "image": "https://room-deno.lain-lab.deno.net/room01/banner.webp", "description": "Deno Pages TECHNICAL LOGS & DEMOS" },
   { "name": "surge Pages room", "url": "https://wired-room-surge.surge.sh/", "image": "https://wired-room-surge.surge.sh/banner.webp", "description": "surge Pages TECHNICAL LOGS & DEMOS" },
-  { "name": "firebase Pages room", "url": "https://wired-room-lain-5a04a.web.app/", "image": "https://wired-room-lain-5a04a.web.app/banner.webp", "description": "firebase Pages TECHNICAL LOGS & DEMOS" }
-
+  { "name": "firebase Pages room", "url": "https://wired-room-lain-5a04a.web.app/", "image": "https://wired-room-lain-5a04a.web.app/banner.webp", "description": "firebase Pages TECHNICAL LOGS & DEMOS" },
+  { "name": "GitLab Pages room", "url": "https://room-gitlab-02c14a.gitlab.io/", "image": "https://room-gitlab-02c14a.gitlab.io/banner.webp", "description": "GitLab Pages TECHNICAL LOGS & DEMOS" }
 ]
