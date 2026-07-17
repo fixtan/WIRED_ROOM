@@ -4,5 +4,6 @@
   { "name": "Vercel Pages room", "url": "https://room-vercel.vercel.app/", "image": "https://room-vercel.vercel.app/banner.webp", "description": "Vercel Pages TECHNICAL LOGS & DEMOS" },
   { "name": "Cloudflare Pages room", "url": "https://room-cloudflare.fixjp.workers.dev/", "image": "https://room-cloudflare.fixjp.workers.dev/banner.webp", "description": "Cloudflare Pages TECHNICAL LOGS & DEMOS" },
   { "name": "Render Pages room", "url": "https://room-render.onrender.com/aisle/", "image": "https://room-render.onrender.com/aisle/banner.webp", "description": "Render Pages TECHNICAL LOGS & DEMOS" },
-  { "name": "Deno Pages room", "url": "https://room-deno.lain-lab.deno.net/room01/", "image": "https://room-deno.lain-lab.deno.net/room01/banner.webp", "description": "Deno Pages TECHNICAL LOGS & DEMOS" }
+  { "name": "Deno Pages room", "url": "https://room-deno.lain-lab.deno.net/room01/", "image": "https://room-deno.lain-lab.deno.net/room01/banner.webp", "description": "Deno Pages TECHNICAL LOGS & DEMOS" },
+  { "name": "surge Pages room", "url": "https://wired-room-surge.surge.sh/", "image": "https://wired-room-surge.surge.sh/banner.webp", "description": "surge Pages TECHNICAL LOGS & DEMOS" }
 ]
