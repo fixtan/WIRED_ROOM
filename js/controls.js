@@ -149,10 +149,10 @@ export function checkPortalProximity(S) {
   let nearestPortal = null;
   let nearestDist = S.PORTAL_TRIGGER_DIST;
 
-  _playerPosXZ.set(S.playerPos.x, 0, S.playerPos.z);
+  _playerPosXZ.set(S.playerPos.x, S.playerPos.y, S.playerPos.z);
 
   for (const pm of S.portalMeshes) {
-    _portalPos.set(pm.position.x, 0, pm.position.z);
+    _portalPos.set(pm.position.x, pm.position.y, pm.position.z);
     const dist = _playerPosXZ.distanceTo(_portalPos);
     if (dist < nearestDist) {
       nearestDist = dist;
