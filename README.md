@@ -11,18 +11,22 @@ Rooms connect to each other through portals. No central server — each person h
 
 ## Live Demos
 
-Deployed on 6 different hosting services — same static files, cross-server VR portal navigation:
+Deployed on 9 different hosting services — same static files, cross-server VR portal navigation:
 
-| Host | URL |
-|------|-----|
-| Netlify | https://lain-lab.com/room/ |
-| GitHub Pages | https://fixtan.github.io/WIRED_ROOM/ |
-| Vercel | https://room-vercel.vercel.app/ |
-| Cloudflare Pages | https://room-cloudflare.fixjp.workers.dev/ |
-| Render | https://room-render.onrender.com/ |
-| Deno Deploy | https://room-deno.lain-lab.deno.net/ |
+| Host | URL | CORS |
+|------|-----|------|
+| Netlify | https://lain-lab.com/room/ | ○ |
+| GitHub Pages | https://fixtan.github.io/WIRED_ROOM/ | ○ |
+| Vercel | https://room-vercel.vercel.app/ | ○ |
+| Cloudflare Pages | https://room-cloudflare.fixjp.workers.dev/ | ○ |
+| Render | https://room-render.onrender.com/aisle/ | ○ |
+| Deno Deploy | https://room-deno.lain-lab.deno.net/room01/ | ○ |
+| Surge.sh | https://wired-room-surge.surge.sh/ | ✕ |
+| Firebase | https://wired-room-lain-5a04a.web.app/ | ○ |
+| GitLab Pages | https://room-gitlab-02c14a.gitlab.io/ | ○ |
 
-All six rooms are connected via portals. You can walk between servers in VR.
+All nine rooms are connected via portals. You can walk between servers in VR.
+Surge.sh does not support CORS headers on free plans, so banner images cannot be fetched cross-origin (standalone access only).
 
 ## Getting Started
 
@@ -120,6 +124,52 @@ Deno.serve((req) => serveDir(req, {
   headers: ["Access-Control-Allow-Origin:*"],
 }));
 ```
+
+**Surge.sh** — No CORS header support on the free plan. Rooms work standalone but cannot participate in cross-origin banner loading. Deploy with:
+
+```bash
+npx surge . your-room-name.surge.sh
+```
+
+**Firebase Hosting** — Add `headers` section to `firebase.json`:
+
+```json
+{
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**/*",
+        "headers": [
+          { "key": "Access-Control-Allow-Origin", "value": "*" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**GitLab Pages** — CORS enabled by default. No configuration needed. GitLab Pages automatically returns `Access-Control-Allow-Origin: *` for requests with an `Origin` header.
+
+Note: GitLab Pages requires a `.gitlab-ci.yml` to deploy. The `public/` directory name is reserved by GitLab as the publish directory, which conflicts with WIRED ROOM's own `public/` folder. Use this CI script to handle it:
+
+```yaml
+pages:
+  stage: deploy
+  script:
+    - mkdir .deploy
+    - cp -r * .deploy/ || true
+    - rm -rf public
+    - mv .deploy public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+```
+
+**Fly.io** — Not recommended. Free tier was removed in 2024. Requires credit card and costs ~$1.94/month minimum.
 
 If your server doesn't support CORS, you can host room assets (GLB, VRM, media) on a CORS-enabled CDN and reference them from your room.
 
@@ -337,6 +387,9 @@ When entering a portal (or pressing Back), a procedural plaza is generated with 
 ![WIRED ROOM Banner: cloudflare](https://room-cloudflare.fixjp.workers.dev/banner.webp)
 ![WIRED ROOM Banner: render](https://room-render.onrender.com/aisle/banner.webp)
 ![WIRED ROOM Banner: deno](https://room-deno.lain-lab.deno.net/room01/banner.webp)
+![WIRED ROOM Banner: surge](https://wired-room-surge.surge.sh/banner.webp)
+![WIRED ROOM Banner: firebase](https://wired-room-lain-5a04a.web.app/banner.webp)
+![WIRED ROOM Banner: gitlab](https://room-gitlab-02c14a.gitlab.io/banner.webp)
 
 
 
