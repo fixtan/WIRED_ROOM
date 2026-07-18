@@ -273,13 +273,30 @@ async function exportRoom(S) {
     // moved below media processing
 
     // ── 2. Room GLB ──
+    let glbData = null;
     if (config.isCustomGLB && config.customGLBKey) {
-      const glbData = await db.assets.get(config.customGLBKey);
-      if (glbData) zip.file('public/room.glb', glbData);
+      glbData = await db.assets.get(config.customGLBKey);
     } else {
       const glbPath = `./assets/room/${config.roomFile || 'room_blank.glb'}`;
-      const glbData = await fetchBinary(glbPath);
-      if (glbData) zip.file('public/room.glb', glbData);
+      glbData = await fetchBinary(glbPath);
+    }
+    if (glbData) {
+      if (statusEl) statusEl.textContent = 'Compressing GLB...';
+      try {
+        const { compressGLB } = await import('./glb-compress.js');
+        const compressed = await compressGLB(glbData, {
+          quality: 0.75,
+          maxSize: 2048,
+          onProgress: (stage, pct) => {
+            if (statusEl) statusEl.textContent = `Compressing: ${stage} ${pct}%`;
+          },
+        });
+        zip.file('public/room.glb', compressed);
+      } catch (e) {
+        console.warn('[EXPORT] GLB compression failed, using original:', e);
+        zip.file('public/room.glb', glbData);
+      }
+      if (statusEl) statusEl.textContent = 'Exporting...';
     }
 
     // ── 3. Avatar animations ──
