@@ -9,6 +9,10 @@ WIRED ROOM lets you create a 3D room you can walk around in, decorate with image
 
 Rooms connect to each other through portals. No central server — each person hosts their own room on their own domain.
 
+### GLB Compression
+
+Export ZIP automatically compresses GLB textures to WebP format, reducing file sizes by 70-90%. No external tools needed — compression runs entirely in the browser via `OffscreenCanvas`. A standalone GLB Compressor tool with Draco geometry compression is also available at https://lain-lab.com/glb-compressor/
+
 ## Live Demos
 
 Deployed on 9 different hosting services — same static files, cross-server VR portal navigation:
@@ -304,6 +308,7 @@ room/
 │   ├── editor.js       ← Room Info フォーム
 │   ├── media.js        ← ポータルURL削除、portalType
 │   ├── menu.js
+│   ├── glb-compress.js  ← Export時GLBテクスチャWebP自動圧縮
 │   ├── portal-editor.js ← Friend/Worksポータルリスト編集UI
 │   ├── portal-effect.js ← 共通エフェクト、clearAllPortalAnimations
 │   ├── room-loader.js  ← onProgress対応
@@ -408,6 +413,15 @@ Friend and Works portals are managed via the in-room editor (right-click → **E
 
 
 ![WIRED ROOM Edit portal List](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_EDIT_PORTAL.webp)
+
+### Portal-Aware Spawn
+
+When navigating to a room via a Friend or Works portal, the player spawns at the corresponding portal position in the destination room instead of the default spawn point. This creates a natural flow: enter through a friend portal → arrive at the friend portal in the other room.
+
+- **PC:** URL parameter `?from=friend` or `?from=works` is appended on navigation
+- **VR:** `portalType` is passed to `loadExternalRoom()`
+- **Return:** Returning from the plaza spawns the player back at the portal they entered from
+- **Fallback:** If no matching portal exists, the default spawn point is used
 
 ### Registering Your Room
 
