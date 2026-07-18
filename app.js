@@ -284,6 +284,22 @@ export async function loadRoom(S, roomData, showProgress) {
     _trackSceneAdditions(S);
   }
 
+  // Spawn at portal position if arriving from friend/works
+  const fromType = new URLSearchParams(window.location.search).get('from');
+  if (fromType && fromType !== 'global') {
+    const targetPortal = S.portalMeshes.find(
+      pm => pm.userData.portalType === fromType
+    );
+    if (targetPortal) {
+      S.playerPos.set(
+        targetPortal.position.x,
+        targetPortal.position.y + 0.5,
+        targetPortal.position.z
+      );
+      console.log(`[ROOM] Spawned at ${fromType} portal:`, targetPortal.position);
+    }
+  }
+
   if (showProgress) {
     hideProgressBar();
   }
@@ -307,7 +323,7 @@ function _trackSceneAdditions(S) {
 // ============================================================
 // Load external room (SPA mode for VR portal navigation)
 // ============================================================
-export async function loadExternalRoom(S, url) {
+export async function loadExternalRoom(S, url, portalType = 'global') {
   // fade scene
   const fade = document.getElementById('scene-fade');
 
@@ -355,6 +371,21 @@ export async function loadExternalRoom(S, url) {
 
   // Load new room
   await loadRoom(S, roomData, false);
+
+  // Spawn at portal position if arriving from friend/works (VR)
+  if (portalType && portalType !== 'global') {
+    const targetPortal = S.portalMeshes.find(
+      pm => pm.userData.portalType === portalType
+    );
+    if (targetPortal) {
+      S.playerPos.set(
+        targetPortal.position.x,
+        targetPortal.position.y + 0.5,
+        targetPortal.position.z
+      );
+      console.log(`[ROOM] VR: Spawned at ${portalType} portal:`, targetPortal.position);
+    }
+  }
 
   // Fade in
   fade.classList.remove('active');

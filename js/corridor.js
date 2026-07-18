@@ -29,6 +29,7 @@ let savedBackground = null;
 let active = false;
 let stateRef = null;
 let savedPortalMeshes = null;// portals
+let currentPortalType = 'global';
 
 export function isInCorridor() { return active; }
 
@@ -68,6 +69,7 @@ export async function enterCorridor(S, portalType = 'global') {
   if (active) return;
   stateRef = S;
   active = true;
+  currentPortalType = portalType;
 
   // Hide room
   hideRoom(S);
@@ -125,7 +127,8 @@ export async function exitCorridor(S, url) {
     if (isVRActive()) {
       const { loadExternalRoom } = await import('../app.js');
       cleanupPlaza(S);
-      await loadExternalRoom(S, url);
+      // await loadExternalRoom(S, url);
+      await loadExternalRoom(S, url, currentPortalType); // portal識別
      } else {
       console.log('FADE: exitCorridor PC path', url);
       const fade = document.getElementById('scene-fade');
@@ -137,7 +140,7 @@ export async function exitCorridor(S, url) {
         fade.style.transition = 'opacity 0.5s ease';
         fade.style.opacity = '1';
         fade.addEventListener('transitionend', () => {
-          window.location.href = url;
+          window.location.href = url + (url.includes('?') ? '&' : '?') + 'from=' + currentPortalType;// portal識別
         }, { once: true });
       });
       return; // prevent falling through
@@ -154,9 +157,26 @@ export async function exitCorridor(S, url) {
   if (savedCloudMesh) savedCloudMesh.visible = true;
   if (savedBackground) S.scene.background = savedBackground;
 
-  // Restore player position to spawn
-  const spawn = S.roomData?.spawn || [0, 0, 3];
-  S.playerPos.set(spawn[0], spawn[1], spawn[2]);
+  // Restore player position — return to the portal they entered from
+  let spawned = false;
+  if (currentPortalType && currentPortalType !== 'global') {
+    const targetPortal = S.portalMeshes.find(
+      pm => pm.userData.portalType === currentPortalType
+    );
+    if (targetPortal) {
+      S.playerPos.set(
+        targetPortal.position.x,
+        targetPortal.position.y + 0.5,
+        targetPortal.position.z
+      );
+      spawned = true;
+      console.log(`[PLAZA] Returned to ${currentPortalType} portal:`, targetPortal.position);
+    }
+  }
+  if (!spawned) {
+    const spawn = S.roomData?.spawn || [0, 0, 3];
+    S.playerPos.set(spawn[0], spawn[1], spawn[2]);
+  }
 
   console.log('[PLAZA] Returned to room');
 }
