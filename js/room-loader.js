@@ -255,12 +255,174 @@ export const SKY_PRESETS = {
 };
 
 // ============================================================
-// Skybox
+// GLSL Shaders for Dynamic Skybox (Seamless 3D Clouds Version)
+// ============================================================
+const skyVertexShader = `
+  varying vec3 vWorldPosition;
+  void main() {
+    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    vWorldPosition = worldPosition.xyz;
+    gl_Position = projectionMatrix * viewMatrix * worldPosition;
+  }
+`;
+
+const skyFragmentShader = `
+  uniform float uTime;
+  uniform vec3 uTopColor;
+  uniform vec3 uMidColor;
+  uniform vec3 uBottomColor;
+  uniform float uStarsIntensity;
+  uniform float uGridIntensity;
+  uniform vec3 uGridColor;
+
+  // ── 新設の雲パラメータ ──
+  uniform float uCloudsIntensity; // 1.0 で雲を表示
+  uniform vec3 uCloudColor;       // 雲の色
+  uniform float uCloudAlpha;      // 雲の不透明度
+
+  varying vec3 vWorldPosition;
+
+  // 2D ハッシュ
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+
+  // ── 【解決策】繋ぎ目を消し去るための3D疑似ランダムハッシュ ──
+  float hash3(vec3 p) {
+    return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453123);
+  }
+
+  // ── 完全シームレスな 3D Value Noise ──
+  float noise3(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    vec3 u = f * f * (3.0 - 2.0 * f);
+
+    float a = hash3(i + vec3(0.0, 0.0, 0.0));
+    float b = hash3(i + vec3(1.0, 0.0, 0.0));
+    float c = hash3(i + vec3(0.0, 1.0, 0.0));
+    float d = hash3(i + vec3(1.0, 1.0, 0.0));
+    float e = hash3(i + vec3(0.0, 0.0, 1.0));
+    float f_ = hash3(i + vec3(1.0, 0.0, 1.0));
+    float g = hash3(i + vec3(0.0, 1.0, 1.0));
+    float h = hash3(i + vec3(1.0, 1.0, 1.0));
+
+    return mix(mix(mix(a, b, u.x), mix(c, d, u.x), u.y),
+               mix(mix(e, f_, u.x), mix(g, h, u.x), u.y), u.z);
+  }
+
+  void main() {
+    // 球体の表面方向ベクトル（これが3D空間上のシームレスな座標になります）
+    vec3 dir = normalize(vWorldPosition);
+
+    // ── 1. 基本のグラデーション ──
+    float height = dir.y;
+    float wave = sin(uTime * 0.05) * 0.02;
+    vec3 skyColor = mix(uMidColor, uTopColor, max(height + wave, 0.0));
+    skyColor = mix(skyColor, uBottomColor, max(-height + wave, 0.0));
+
+    float horizonMask = smoothstep(0.0, 0.4, 1.0 - abs(dir.y));
+
+    // ── 2. 【新設】3Dプロシージャル・アニメ調の雲 (昼・夕方向け) ──
+    if (uCloudsIntensity > 0.0 && dir.y > -0.1) {
+      // 風の流れを作る（時間経過で3Dベクトルをシフト。どこまで回っても無限に繋がります）
+      vec3 cloudPos = dir * 3.0 + vec3(uTime * 0.02, 0.0, uTime * 0.01);
+
+      // 複数の周波数のノイズを重ねて（fBm）、もくもくした雲の質量を作る
+      float n = noise3(cloudPos) * 0.5;
+      n += noise3(cloudPos * 2.0) * 0.25;
+      n += noise3(cloudPos * 4.0) * 0.125;
+
+      // smoothstepの閾値を鋭く絞ることで、引き延ばされたボケを消し、
+      // アニメの背景美術のような輪郭のくっきりした「ぽっかり浮かぶ雲」にする
+      float cloudMask = smoothstep(0.38, 0.45, n);
+
+      // 地平線付近で自然に消えるようにマスクをかける
+      cloudMask *= smoothstep(-0.1, 0.15, dir.y);
+
+      // 雲の影（立体感）を微かに表現するためのサブマスク
+      float shadowMask = smoothstep(0.35, 0.42, n);
+      vec3 finalCloudColor = mix(uCloudColor * 0.85, uCloudColor, shadowMask);
+
+      // スカイカラーと合成
+      skyColor = mix(skyColor, finalCloudColor, cloudMask * uCloudAlpha);
+    }
+
+    // ── 3. 星の描画 (夜空用) ──
+    if (uStarsIntensity > 0.0 && dir.y > -0.1) {
+      vec2 starUV = vec2(atan(dir.x, dir.z) * 50.0, dir.y * 70.0);
+      vec2 ipos = floor(starUV);
+      vec2 fpos = fract(starUV);
+
+      float starHash = hash(ipos);
+      if (starHash > 0.95) {
+        vec2 offset = vec2(hash(ipos + 12.3), hash(ipos + 45.6));
+        float r = length(fpos - offset);
+        float star = smoothstep(0.09, 0.0, r);
+
+        float blinkSpeed = 1.5 + starHash * 4.5;
+        float twinkle = sin(uTime * blinkSpeed + starHash * 62.8) * 0.5 + 0.5;
+
+        vec3 starColor = mix(vec3(0.7, 0.9, 1.0), vec3(1.0, 0.7, 0.9), hash(ipos + 78.9));
+        starColor = mix(starColor, vec3(1.0, 1.0, 0.9), starHash);
+
+        float horizonFade = smoothstep(-0.1, 0.2, dir.y);
+        skyColor += starColor * (star * twinkle * 0.8) * horizonFade * uStarsIntensity;
+      }
+    }
+
+    // ── 4. 流れ星の描画 ──
+    if (uStarsIntensity > 0.0 && dir.y > 0.1) {
+      float mTime = uTime * 0.4;
+      float mCycle = fract(mTime);
+      float mId = floor(mTime);
+      float mHash = hash(vec2(mId, 99.73));
+
+      if (mHash > 0.3) {
+        float mAngle = mHash * 6.28318;
+        float currentAngle = atan(dir.x, dir.z);
+        float angleDiff = atan(sin(currentAngle - mAngle), cos(currentAngle - mAngle));
+
+        float strokeX = angleDiff * 3.5;
+        float strokeY = dir.y - 0.1;
+
+        float meteorProgress = mix(0.8, -0.1, mCycle);
+        float lineDist = abs(strokeY - (-strokeX + meteorProgress));
+
+        float headMask = strokeY - meteorProgress;
+        if (headMask > 0.0 && headMask < 0.3) {
+          float intensity = smoothstep(0.012, 0.0, lineDist);
+          intensity *= smoothstep(0.3, 0.0, headMask);
+          intensity *= smoothstep(0.0, 0.1, mCycle) * smoothstep(1.0, 0.7, mCycle);
+
+          vec3 meteorColor = mix(vec3(0.6, 0.9, 1.0), vec3(1.0, 0.7, 0.9), mHash);
+          skyColor += meteorColor * intensity * 1.5 * uStarsIntensity;
+        }
+      }
+    }
+
+    // ── 5. デジタルグリッドの描画 (WIRED用) ──
+    if (uGridIntensity > 0.0) {
+      vec2 gridUV = vec2(atan(dir.x, dir.z) * 45.0, dir.y * 60.0);
+      gridUV.y += uTime * 0.04;
+      vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / fwidth(gridUV);
+      float gridPattern = 1.0 - min(min(grid.x, grid.y), 1.0);
+      float pulse = mix(0.3, 1.0, sin(uTime * 1.5 + gridUV.y * 0.2) * 0.5 + 0.5);
+
+      vec3 finalGrid = uGridColor * gridPattern * horizonMask * pulse * 0.25;
+      skyColor += finalGrid * uGridIntensity;
+    }
+
+    gl_FragColor = vec4(skyColor, 1.0);
+  }
+`;
+
+// ============================================================
+// Skybox Creation
 // ============================================================
 export function createSkybox(S, skyConfig) {
   const config = skyConfig || {};
 
-  // Resolve preset or use custom config
   let preset;
   if (config.preset && SKY_PRESETS[config.preset]) {
     preset = { ...SKY_PRESETS[config.preset], ...config };
@@ -271,7 +433,6 @@ export function createSkybox(S, skyConfig) {
     S.scene.background = new THREE.Color('#000000');
     return;
   } else {
-    // Default or custom gradient
     preset = {
       topColor: config.topColor || '#050520',
       midColor: config.midColor || '#0a0a3a',
@@ -286,131 +447,67 @@ export function createSkybox(S, skyConfig) {
     };
   }
 
-  // ── Main sky sphere ──
-  const skyCanvas = document.createElement('canvas');
-  skyCanvas.width = 512;
-  skyCanvas.height = 512;
-  const ctx = skyCanvas.getContext('2d');
-
-  // Gradient
-  const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-  gradient.addColorStop(0, preset.topColor);
-  gradient.addColorStop(0.45, preset.midColor);
-  gradient.addColorStop(1, preset.bottomColor);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 512, 512);
-
-  // Stars
-  if (preset.stars) {
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 3000; i++) {
-      const x = Math.random() * 512;
-      const y = Math.random() * 280;
-      const r = Math.random() * 0.1 ;
-      ctx.globalAlpha = Math.random() * 0.05 ;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+  // グリッドカラーの解決
+  let gridColor = new THREE.Color('#ff6699');
+  if (preset.name === 'WIRED') {
+    gridColor.set('#00ff44');
   }
 
-  // Moon
-  if (preset.moon) {
-    ctx.fillStyle = '#eeeedd';
-    ctx.globalAlpha = 0.9;
-    ctx.beginPath();
-    ctx.arc(380, 70, 18, 0, Math.PI * 2);
-    ctx.fill();
-    // Moon glow
-    const moonGrad = ctx.createRadialGradient(380, 70, 18, 380, 70, 50);
-    moonGrad.addColorStop(0, 'rgba(200,200,180,0.15)');
-    moonGrad.addColorStop(1, 'rgba(200,200,180,0)');
-    ctx.fillStyle = moonGrad;
-    ctx.beginPath();
-    ctx.arc(380, 70, 50, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+  // ── プリセットの雲設定をシェーダー用に最適化 ──
+  let cColor = new THREE.Color('#ffffff'); // Day用の白雲
+  let cAlpha = 0.7;                        // アニメっぽく少しハッキリめに
+
+  if (preset.name === 'Sunset') {
+    cColor.set('#f3a17b');                 // 夕焼けに染まったパステルオレンジの雲に変更
+    cAlpha = 0.6;
   }
 
-  // Grid overlay (WIRED style)
-  if (preset.grid) {
-    ctx.strokeStyle = 'rgba(0,255,0,0.07)';
-    ctx.lineWidth = 0.5;
-    for (let i = 0; i < 512; i += 16) {
-      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 512); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
-    }
-  }
+  // Uniformsの定義
+  const uniforms = {
+    uTime: { value: 0.0 },
+    uTopColor: { value: new THREE.Color(preset.topColor) },
+    uMidColor: { value: new THREE.Color(preset.midColor) },
+    uBottomColor: { value: new THREE.Color(preset.bottomColor) },
+    uStarsIntensity: { value: preset.stars ? 1.0 : 0.0 },
+    uGridIntensity: { value: preset.grid ? 1.0 : 0.0 },
+    uGridColor: { value: gridColor },
+    // 雲制御用の一元化
+    uCloudsIntensity: { value: preset.clouds ? 1.0 : 0.0 },
+    uCloudColor: { value: cColor },
+    uCloudAlpha: { value: cAlpha }
+  };
 
-  const skyGeo = new THREE.SphereGeometry(200, 32, 32);
-  const skyMat = new THREE.MeshBasicMaterial({
-    map: new THREE.CanvasTexture(skyCanvas),
+  const skyGeo = new THREE.SphereGeometry(400, 64, 64);
+  const skyMat = new THREE.ShaderMaterial({
+    vertexShader: skyVertexShader,
+    fragmentShader: skyFragmentShader,
+    uniforms: uniforms,
     side: THREE.BackSide,
+    depthWrite: false
   });
+
   const skyMesh = new THREE.Mesh(skyGeo, skyMat);
   S.scene.add(skyMesh);
   S.scene.background = new THREE.Color(preset.bgColor);
 
-  // Store for animation
+  S.skyMaterial = skyMat;
   S.skyMesh = skyMesh;
   S.skyRotSpeed = preset.rotSpeed;
 
-  // ── Cloud layer (separate sphere, slower rotation) ──
-  if (preset.clouds) {
-    const cloudCanvas = document.createElement('canvas');
-    cloudCanvas.width = 512;
-    cloudCanvas.height = 256;
-    const cctx = cloudCanvas.getContext('2d');
-
-    // Draw procedural clouds
-    cctx.clearRect(0, 0, 512, 256);
-    const cloudCount = 20 + Math.floor(Math.random() * 15);
-    for (let i = 0; i < cloudCount; i++) {
-      const cx = Math.random() * 512;
-      const cy = 40 + Math.random() * 160;
-      const w = 30 + Math.random() * 80;
-      const h = 10 + Math.random() * 25;
-
-      cctx.fillStyle = preset.cloudColor;
-      cctx.beginPath();
-      cctx.ellipse(cx, cy, w, h, 0, 0, Math.PI * 2);
-      cctx.fill();
-
-      // Sub-puffs
-      for (let j = 0; j < 3; j++) {
-        const px = cx + (Math.random() - 0.5) * w;
-        const py = cy + (Math.random() - 0.5) * h;
-        const pr = 8 + Math.random() * 20;
-        cctx.beginPath();
-        cctx.arc(px, py, pr, 0, Math.PI * 2);
-        cctx.fill();
-      }
-    }
-
-    const cloudGeo = new THREE.SphereGeometry(195, 32, 16);
-    const cloudMat = new THREE.MeshBasicMaterial({
-      map: new THREE.CanvasTexture(cloudCanvas),
-      side: THREE.BackSide,
-      transparent: true,
-      depthWrite: false,
-    });
-    const cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
-    S.scene.add(cloudMesh);
-    S.cloudMesh = cloudMesh;
-  }
+  // ※ 古い Canvas ベースの別メッシュ (S.cloudMesh) 生成処理は完全に削除しました
 }
 
 // ============================================================
-// Skybox animation (call from render loop)
+// Skybox animation
 // ============================================================
 export function updateSkybox(S, dt) {
+  if (S.skyMaterial && S.skyMaterial.uniforms) {
+    S.skyMaterial.uniforms.uTime.value += dt;
+  }
   if (S.skyMesh && S.skyRotSpeed) {
     S.skyMesh.rotation.y += S.skyRotSpeed * dt;
   }
-  if (S.cloudMesh) {
-    S.cloudMesh.rotation.y += (S.skyRotSpeed || 0.003) * dt * 0.6;
-  }
+  // ※ S.cloudMesh の回転処理も不要になったため削除しました
 }
 
 // ============================================================
