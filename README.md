@@ -9,9 +9,28 @@ WIRED ROOM lets you create a 3D room you can walk around in, decorate with image
 
 Rooms connect to each other through portals. No central server — each person hosts their own room on their own domain.
 
-### GLB Compression
+### GLB Compression & Draco Support
 
-Export ZIP automatically compresses GLB textures to WebP format, reducing file sizes by 70-90%. No external tools needed — compression runs entirely in the browser via `OffscreenCanvas`. A standalone GLB Compressor tool with Draco geometry compression is also available at https://lain-lab.com/glb-compressor/
+Export ZIP automatically compresses GLB textures to WebP format, reducing file sizes by 70-90%. No external tools needed — compression runs entirely in the browser via `OffscreenCanvas`. A standalone GLB Compressor tool with Draco geometry compression is also available at https://lain-lab.com/glb_compressor/
+
+Draco-compressed GLBs are fully supported — the local WASM decoder (`js/draco/`) handles decompression at load time with no CDN dependency.
+
+### GLSL Skybox
+
+Skybox rendering uses a custom GLSL fragment shader instead of Canvas 2D textures. Features include 3D procedural clouds (seamless Value Noise fBm), twinkling stars, shooting stars, and an animated digital grid overlay. All animation is driven by a single `uTime` uniform — no separate mesh layers or texture redraws.
+
+
+
+![WIRED ROOM Skybox animation](https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox.gif)
+
+<p>
+<img src="https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox1.webp" alt="WIRED ROOM Skybox day" width="400">
+<img src="https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox2.webp" alt="WIRED ROOM Skybox sunset" width="400">
+<p/>
+<p>
+<img src="https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox3.webp" alt="WIRED ROOM Skybox night" width="400">
+<img src="https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox4.webp" alt="WIRED ROOM Skybox wired" width="400">
+<p/>
 
 ## Live Demos
 
@@ -184,7 +203,7 @@ On first launch, a 4-step wizard guides you through:
 
 1. **Room Select** — Pick a room template from `models.json`, or use a custom GLB you've uploaded
 2. **Avatar Select** — Choose from 2 bundled VRMs (male/female) or upload your own `.vrm`
-3. **Sky Select** — 4 procedural skybox presets with animation
+3. **Sky Select** — 4 GLSL shader skybox presets (Day, Sunset, Night, WIRED) with real-time animation
 4. **Room Name** — Give your room a name
 
 Settings are saved to `localStorage`. On next visit, the wizard is skipped.
@@ -311,7 +330,8 @@ room/
 │   ├── glb-compress.js  ← Export時GLBテクスチャWebP自動圧縮
 │   ├── portal-editor.js ← Friend/Worksポータルリスト編集UI
 │   ├── portal-effect.js ← 共通エフェクト、clearAllPortalAnimations
-│   ├── room-loader.js  ← onProgress対応
+│   ├── room-loader.js  ← GLB/Draco loading, GLSL skybox
+│   ├── draco/          ← Draco decoder (local WASM)
 │   ├── setup.js
 │   ├── vr.js           ← VRポータル操作、デバウンス修正
 │   └── vr-ui.js        ← VR用3Dヒント表示（汎用スプライト）
@@ -346,12 +366,22 @@ room/
 
 ## Tech Stack
 
-- **Three.js** (r170) — 3D rendering
+- **Three.js** (r170) — 3D rendering + custom GLSL shaders
 - **@pixiv/three-vrm** — VRM avatar support
+- **Draco** — Geometry decompression (local WASM decoder)
 - **three-mesh-bvh** — BVH raycast collision
 - **Dexie** — IndexedDB wrapper
 - **WebXR** — VR mode for Meta Quest
 - No build tools — `importmap` + CDN
+
+### Related Tools
+
+| Tool | Description | URL |
+|------|-------------|-----|
+| GLB Compressor | WebP texture + Draco geometry compression | https://lain-lab.com/glb_compressor/ |
+| VRM Validator | 3D preview + validation checks | https://lain-lab.com/vrm_validator/ |
+| VRM Texture Replacer | Texture export/import/replace with live preview | https://lain-lab.com/vrm_texture_replacer/ |
+| VRM Thumbnail Generator | VRM thumbnail capture with poses & expressions | https://lain-lab.com/vrm_thumb/ |
 
 ## Portal System
 
