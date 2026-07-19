@@ -8,8 +8,9 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 // ============================================================
 const gltfLoader = new GLTFLoader();
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/');
+dracoLoader.setDecoderPath('./js/draco/');
 gltfLoader.setDRACOLoader(dracoLoader);
+export { dracoLoader };
 
 export function loadGLB(url, onProgress) {
   return new Promise((resolve, reject) => {

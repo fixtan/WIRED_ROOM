@@ -1,7 +1,7 @@
 // app.js - Entry point, shared state, init, render loop
 import * as THREE from 'three';
 import { MeshBVH, acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
-import { loadRoomGLB, loadObjectGLB, placeObject, buildRoom, createSkybox, createPortal, updateSkybox } from './js/room-loader.js';
+import { loadRoomGLB, loadObjectGLB, placeObject, buildRoom, createSkybox, createPortal, updateSkybox,dracoLoader } from './js/room-loader.js';
 import { loadPlayerAvatar, updateAvatar, disposeAvatar } from './js/avatar.js';
 import { setupControls, update } from './js/controls.js';
 import { loadConfig, showSetupWizard, buildRoomDataFromConfig } from './js/setup.js';
@@ -532,6 +532,7 @@ import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-v
 const _pubVrmLoader = new GLTFLoader();
 _pubVrmLoader.register((p) => new VRMLoaderPlugin(p));
 _pubVrmLoader.register((p) => new VRMAnimationLoaderPlugin(p));
+_pubVrmLoader.setDRACOLoader(dracoLoader);
 
 function _loadGLTF(url) {
   return new Promise((resolve, reject) => _pubVrmLoader.load(url, resolve, undefined, reject));
