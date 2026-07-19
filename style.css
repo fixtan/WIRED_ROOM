@@ -767,3 +767,51 @@ canvas {
   cursor: pointer;
   border-radius: 2px;
 }
+
+/* ============================================================
+   Sky Editor Panel
+   ============================================================ */
+#sky-panel {
+  position: fixed;
+  top: 60px;
+  right: 10px;
+  width: 240px;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  z-index: 1000;
+  font-family: 'Courier New', monospace;
+  color: #ccc;
+  font-size: 0.8rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#sky-panel input[type="color"] {
+  width: 50px;
+  height: 24px;
+  border: 1px solid #333;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+#sky-panel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #00e5ff;
+}
+
+#sky-panel select {
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #333;
+  padding: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  width: 100%;
+}
+
+.sky-divider {
+  border-top: 1px solid #333;
+  margin: 6px 0;
+}

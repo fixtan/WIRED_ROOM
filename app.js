@@ -13,6 +13,7 @@ import { setupMedia } from './js/media.js';
 import { updateCorridor , prefetchPortalList } from './js/corridor.js';
 import { createPortalEffect, updatePortalAnimations, clearAllPortalAnimations } from './js/portal-effect.js';
 import { initPortalEditor } from './js/portal-editor.js';
+import { setupSkyEditor, loadSkySettings } from './js/sky-editor.js';
 import { PORTAL_COLORS } from './config.js';
 
 // Patch Three.js for BVH accelerated raycasting
@@ -235,6 +236,23 @@ export async function loadRoom(S, roomData, showProgress) {
   setStage(0, 5, 'Creating skybox...');
   createSkybox(S, roomData.sky);
   _trackSceneAdditions(S);
+
+  // Load saved sky settings (if any)
+  const savedSky = loadSkySettings();
+  if (savedSky && S.skyMaterial?.uniforms) {
+    const u = S.skyMaterial.uniforms;
+    u.uTopColor.value.set(savedSky.topColor);
+    u.uMidColor.value.set(savedSky.midColor);
+    u.uBottomColor.value.set(savedSky.bottomColor);
+    u.uStarsIntensity.value = savedSky.stars ? 1.0 : 0.0;
+    u.uGridIntensity.value = savedSky.grid ? 1.0 : 0.0;
+    u.uCloudsIntensity.value = savedSky.clouds ? 1.0 : 0.0;
+    if (savedSky.cloudColor) u.uCloudColor.value.set(savedSky.cloudColor);
+    if (savedSky.cloudAlpha !== undefined) u.uCloudAlpha.value = savedSky.cloudAlpha;
+    if (savedSky.gridColor) u.uGridColor.value.set(savedSky.gridColor);
+    if (savedSky.rotSpeed !== undefined) S.skyRotSpeed = savedSky.rotSpeed;
+    if (savedSky.bgColor) S.scene.background = new THREE.Color(savedSky.bgColor);
+  }
 
   // Lights
   setupLights(S);
@@ -465,6 +483,7 @@ async function init() {
   setupControls(S);
   setupMenu(S);
   setupEditor(S);
+  setupSkyEditor(S); // Sky editor UI
   await setupMedia(S);
   await prefetchPortalList();// ポータルリストをキャッシュ
   setupVR(S);
