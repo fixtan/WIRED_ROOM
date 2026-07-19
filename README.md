@@ -19,6 +19,8 @@ Draco-compressed GLBs are fully supported — the local WASM decoder (`js/draco/
 
 Skybox rendering uses a custom GLSL fragment shader instead of Canvas 2D textures. Features include 3D procedural clouds (seamless Value Noise fBm), twinkling stars, shooting stars, and an animated digital grid overlay. All animation is driven by a single `uTime` uniform — no separate mesh layers or texture redraws.
 
+The **Sky Settings** editor (right-click menu) allows real-time customization of all skybox parameters — preset selection, gradient colors, star/cloud/grid toggles, cloud color & alpha, grid color, and rotation speed. Changes are applied instantly via shader uniforms without reloading. Custom settings are saved to `localStorage` and restored on next visit.
+
 
 
 ![WIRED ROOM Skybox animation](https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox.gif)
@@ -31,6 +33,8 @@ Skybox rendering uses a custom GLSL fragment shader instead of Canvas 2D texture
 <img src="https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox3.webp" alt="WIRED ROOM Skybox night" width="400">
 <img src="https://assets.lain-lab.com/images/uploads/javascript-threejs-room-12-glsl-skybox4.webp" alt="WIRED ROOM Skybox wired" width="400">
 <p/>
+
+![WIRED ROOM Skybox setting](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_SKY_SETTINGS.webp?)
 
 ## Live Demos
 
@@ -231,7 +235,7 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 
 ## Context Menu (Edit Mode)
 
-![WIRED ROOM context menu](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_MENU.webp?)
+![WIRED ROOM context menu](https://assets.lain-lab.com/images/uploads/WIRED_ROOM_MENU.webp?1)
 
 | Menu Item | Description |
 |-----------|-------------|
@@ -244,6 +248,7 @@ Settings are saved to `localStorage`. On next visit, the wizard is skipped.
 | Clear All Data | Delete all data (IndexedDB + localStorage) and restart |
 | Add Custom Room | Upload your own GLB room model |
 | Adjust Room | Scale, position, rotation sliders |
+| Sky Settings | Real-time skybox customization (preset, colors, stars, clouds, grid) |
 | Add Image | Upload and place images in the room |
 | Add Video | Upload and place MP4 videos |
 | Credit Board | Display room credits or announcement messages |
@@ -331,6 +336,7 @@ room/
 │   ├── portal-editor.js ← Friend/Worksポータルリスト編集UI
 │   ├── portal-effect.js ← 共通エフェクト、clearAllPortalAnimations
 │   ├── room-loader.js  ← GLB/Draco loading, GLSL skybox
+│   ├── sky-editor.js   ← Sky Settings UI (preset/color/toggle editor)
 │   ├── draco/          ← Draco decoder (local WASM)
 │   ├── setup.js
 │   ├── vr.js           ← VRポータル操作、デバウンス修正
